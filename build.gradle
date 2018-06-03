@@ -232,10 +232,12 @@ dependencies {
 
 // Task to run scala tests, as Scala tests not picked up by Gradle by default.
 task spec(dependsOn: ['testClasses'], type: JavaExec) {
+    def cores = Runtime.runtime.availableProcessors()
     main = 'org.scalatest.tools.Runner'
-    args = ['-R', 'build/classes/scala/test', '-o', '-l', 'beam.tags.ExcludeRegular']
+    args = ['-R', 'build/classes/scala/test', '-o', '-l', 'beam.tags.ExcludeRegular', "-P${cores}"]
     classpath = sourceSets.test.runtimeClasspath
 }
+
 test.dependsOn spec
 
 /* //////////////////////////////////////////////////

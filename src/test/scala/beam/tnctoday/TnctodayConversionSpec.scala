@@ -1,9 +1,12 @@
 package beam.tnctoday
 
 import json.converter.{TazOutput, TncToday}
-import org.scalatest.{Matchers, WordSpecLike}
+import org.scalatest.{Matchers, ParallelTestExecution, WordSpecLike}
 
-class TnctodayConversionSpec extends WordSpecLike with Matchers {
+class TnctodayConversionSpec
+    extends WordSpecLike
+    with Matchers
+    with ParallelTestExecution {
 
   lazy val completedStats = TncToday.completeStats(inputData)
   lazy val statsTotals = TncToday.generateTotals(completedStats)
@@ -33,9 +36,10 @@ class TnctodayConversionSpec extends WordSpecLike with Matchers {
 
       val allDays: Seq[String] = (0 to 23).map(i => "%02d:00:00".format(i))
 
-      groupedByDay.foreach { case (_, statsByWeek) =>
-        statsByWeek.size shouldBe 24
-        statsByWeek.map(_.time) should contain theSameElementsAs allDays
+      groupedByDay.foreach {
+        case (_, statsByWeek) =>
+          statsByWeek.size shouldBe 24
+          statsByWeek.map(_.time) should contain theSameElementsAs allDays
       }
     }
     "Generate totals in generateTotals method" in {
@@ -45,9 +49,14 @@ class TnctodayConversionSpec extends WordSpecLike with Matchers {
       val totals = Map(
         0 -> (1.6d, 2.7d),
         1 -> (1.8d, 1.8d),
-        2 -> (0d, 0d), 3 -> (0d, 0d), 4 -> (0d, 0d), 5 -> (0d, 0d), 6 -> (0d, 0d)
+        2 -> (0d, 0d),
+        3 -> (0d, 0d),
+        4 -> (0d, 0d),
+        5 -> (0d, 0d),
+        6 -> (0d, 0d)
       )
-      val totalsMap = statsTotals.map(e => (e.day_of_week, (e.dropoffs, e.pickups)))
+      val totalsMap =
+        statsTotals.map(e => (e.day_of_week, (e.dropoffs, e.pickups)))
       totalsMap should contain theSameElementsAs (totals)
 
     }

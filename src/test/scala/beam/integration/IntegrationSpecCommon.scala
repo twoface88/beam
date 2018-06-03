@@ -2,12 +2,14 @@ package beam.integration
 
 import beam.utils.TestConfigUtils.testConfig
 import com.typesafe.config.{Config, ConfigValueFactory}
+import org.scalatest.{ParallelTestExecution, Suite}
 
-trait IntegrationSpecCommon {
+trait IntegrationSpecCommon extends ParallelTestExecution { this: Suite =>
 
   val configFileName = "test/input/beamville/beam.conf"
   val baseConfig: Config = testConfig(configFileName)
-    .withValue("beam.outputs.events.fileOutputFormats", ConfigValueFactory.fromAnyRef("xml"))
+    .withValue("beam.outputs.events.fileOutputFormats",
+               ConfigValueFactory.fromAnyRef("xml"))
     .resolve
 
   def isOrdered[A](s: Seq[A])(cf: (A, A) => Boolean): Boolean = {
@@ -19,4 +21,3 @@ trait IntegrationSpecCommon {
   }
 
 }
-

@@ -9,15 +9,21 @@ import com.typesafe.config.ConfigValueFactory
 import org.matsim.core.controler.AbstractModule
 import org.matsim.core.controler.listener.IterationEndsListener
 import org.matsim.core.scenario.{MutableScenario, ScenarioUtils}
-import org.scalatest.FlatSpec
+import org.scalatest.{FlatSpec, ParallelTestExecution}
 import org.scalatest.mockito.MockitoSugar
 
-class LCCMSpec extends FlatSpec with BeamHelper with MockitoSugar {
+class LCCMSpec
+    extends FlatSpec
+    with BeamHelper
+    with MockitoSugar
+    with ParallelTestExecution {
 
   it should "be able to run for three iterations with LCCM without exceptions" in {
     val config = testConfig("test/input/beamville/beam.conf")
-      .withValue("beam.outputs.events.fileOutputFormats", ConfigValueFactory.fromAnyRef("xml,csv"))
-      .withValue("beam.agentsim.agents.modalBehaviors.modeChoiceClass",  ConfigValueFactory.fromAnyRef("ModeChoiceLCCM"))
+      .withValue("beam.outputs.events.fileOutputFormats",
+                 ConfigValueFactory.fromAnyRef("xml,csv"))
+      .withValue("beam.agentsim.agents.modalBehaviors.modeChoiceClass",
+                 ConfigValueFactory.fromAnyRef("ModeChoiceLCCM"))
       .resolve()
     val configBuilder = new MatSimBeamConfigBuilder(config)
     val matsimConfig = configBuilder.buildMatSamConf()
@@ -25,17 +31,22 @@ class LCCMSpec extends FlatSpec with BeamHelper with MockitoSugar {
     matsimConfig.planCalcScore().setMemorizingExperiencedPlans(true)
     val beamConfig = BeamConfig(config)
     FileUtils.setConfigOutputFile(beamConfig, matsimConfig)
-    val scenario = ScenarioUtils.loadScenario(matsimConfig).asInstanceOf[MutableScenario]
-    val networkCoordinator = new NetworkCoordinator(beamConfig, scenario.getTransitVehicles)
+    val scenario =
+      ScenarioUtils.loadScenario(matsimConfig).asInstanceOf[MutableScenario]
+    val networkCoordinator =
+      new NetworkCoordinator(beamConfig, scenario.getTransitVehicles)
     networkCoordinator.loadNetwork()
     scenario.setNetwork(networkCoordinator.network)
     val iterationCounter = mock[IterationEndsListener]
-    val injector = org.matsim.core.controler.Injector.createInjector(scenario.getConfig, new AbstractModule() {
-      override def install(): Unit = {
-        install(module(config, scenario, networkCoordinator.transportNetwork))
-        addControlerListenerBinding().toInstance(iterationCounter)
+    val injector = org.matsim.core.controler.Injector.createInjector(
+      scenario.getConfig,
+      new AbstractModule() {
+        override def install(): Unit = {
+          install(module(config, scenario, networkCoordinator.transportNetwork))
+          addControlerListenerBinding().toInstance(iterationCounter)
+        }
       }
-    })
+    )
     val controler = injector.getInstance(classOf[BeamServices]).controler
     controler.run()
   }

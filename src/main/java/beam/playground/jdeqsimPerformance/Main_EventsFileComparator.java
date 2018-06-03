@@ -3,6 +3,8 @@ package beam.playground.jdeqsimPerformance;
 import org.apache.log4j.Logger;
 import org.matsim.utils.eventsfilecomparison.EventsFileComparator;
 
+import static org.matsim.utils.eventsfilecomparison.EventsFileComparator.*;
+
 public class Main_EventsFileComparator {
     private static final Logger log = Logger.getLogger(Main_EventsFileComparator.class);
     public static void main(String[] args) {
@@ -14,19 +16,19 @@ public class Main_EventsFileComparator {
             String filePath1 = args[1];
 
             switch(EventsFileComparator.compare(filePath,filePath1)){
-                case EventsFileComparator.CODE_DIFFERENT_NUMBER_OF_TIMESTEPS:
+                case CODE_DIFFERENT_NUMBER_OF_TIMESTEPS:
                     log.info("Different number of time steps");
                     break;
-                case EventsFileComparator.CODE_DIFFERENT_TIMESTEPS:
+                case CODE_DIFFERENT_TIMESTEPS:
                     log.info("Different time steps");
                     break;
-                case EventsFileComparator.CODE_FILES_ARE_EQUAL:
+                case CODE_FILES_ARE_EQUAL:
                     log.info("Files are equal");
                     break;
-                case EventsFileComparator.CODE_MISSING_EVENT:
+                case CODE_MISSING_EVENT:
                     log.info("Missing Events");
                     break;
-                case EventsFileComparator.CODE_WRONG_EVENT_COUNT:
+                case CODE_WRONG_EVENT_COUNT:
                     log.info("Wrong event count");
                     break;
             }
