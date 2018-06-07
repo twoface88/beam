@@ -82,10 +82,10 @@ class RideHailingManager(
 
 
 
-  val tncIterationStats:Option[TNCIterationStats]={
+  val tncIterationStats: Option[TNCIterationStats] ={
     val rideHailIterationHistoryActor = context.actorSelection("/user/rideHailIterationHistoryActor")
-    val future=rideHailIterationHistoryActor.ask(GetCurrentIterationRideHailStats)
-    Await.result(future, timeout.duration).asInstanceOf[Option[TNCIterationStats]]
+    val future = rideHailIterationHistoryActor.ask(GetCurrentIterationRideHailStats).mapTo[Option[TNCIterationStats]]
+    Await.result(future, timeout.duration)
   }
 
 
@@ -97,7 +97,7 @@ class RideHailingManager(
     case RideHailResourceAllocationManager.BUFFERED_IMPL_TEMPLATE =>
       new RideHailAllocationManagerBufferedImplTemplate(this)
     case RideHailResourceAllocationManager.REPOSITIONING_LOW_WAITING_TIMES =>
-      new RepositioningWithLowWaitingTimes(this,tncIterationStats)
+      new RepositioningWithLowWaitingTimes(this, tncIterationStats)
     case RideHailResourceAllocationManager.RANDOM_REPOSITIONING =>
       new RandomRepositioning(this)
     case _ =>
