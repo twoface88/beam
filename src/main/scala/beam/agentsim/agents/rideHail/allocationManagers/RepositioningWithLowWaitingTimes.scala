@@ -2,10 +2,10 @@ package beam.agentsim.agents.rideHail.allocationManagers
 
 import beam.agentsim.agents.rideHail.{RideHailingManager, TNCIterationStats}
 import beam.router.BeamRouter.Location
-import org.matsim.api.core.v01.Id
+import org.matsim.api.core.v01.{Coord, Id}
 import org.matsim.vehicles.Vehicle
 
-class RepositioningWithLowWaitingTimes(val rideHailingManager: RideHailingManager,tncIterationStats:Option[TNCIterationStats]) extends RideHailResourceAllocationManager {
+class RepositioningWithLowWaitingTimes(val rideHailingManager: RideHailingManager, val tncIterationStats: Option[TNCIterationStats]) extends RideHailResourceAllocationManager {
 
   val isBufferedRideHailAllocationMode = false
 
@@ -13,12 +13,12 @@ class RepositioningWithLowWaitingTimes(val rideHailingManager: RideHailingManage
     None
   }
 
-def allocateVehicles(allocationsDuringReservation: Vector[(VehicleAllocationRequest, Option[VehicleAllocation])]): Vector[(VehicleAllocationRequest, Option[VehicleAllocation])] = {
-  log.error("batch processing is not implemented for DefaultRideHailResourceAllocationManager")
+  def allocateVehicles(allocationsDuringReservation: Vector[(VehicleAllocationRequest, Option[VehicleAllocation])]): Vector[(VehicleAllocationRequest, Option[VehicleAllocation])] = {
+    log.error("batch processing is not implemented for DefaultRideHailResourceAllocationManager")
     return allocationsDuringReservation
   }
 
-  override def repositionVehicles(tick: Double): Vector[(Id[Vehicle], Location)] = {
+  def repositionVehicles(tick: Double): Vector[(Id[Vehicle], Location)] = {
 
     /*
 
@@ -30,11 +30,7 @@ def allocateVehicles(allocationsDuringReservation: Vector[(VehicleAllocationRequ
       -> find areas with taxis with long idle time
         -> threshhold parameter min idle time and max share to reposition
 
-
       -> ide now + idle for a longer time
-
-
-
 
     -> 	Randomly sampling (This is what we implement first)
 		-> search radius: idle time in that area make as window (TAZ areas you can reach in 10min)
@@ -50,39 +46,31 @@ def allocateVehicles(allocationsDuringReservation: Vector[(VehicleAllocationRequ
 
 				look at demand in 10min at the TAZ around me
 
-				probabilityOfServing(taz_i)=score(taz_i)/sumOfScores
-				-> score(taz_i)=alpha*demand+betta*waitingTimes
-
-=>
-
-
-
-rideHailStats
-
-
-
+				probabilityOfServing(taz_i) = score(taz_i) / sumOfScores
+				score(taz_i) = alpha * demand + betta * waitingTimes
      */
 
     tncIterationStats match {
-      case Some(tncIterationStats) =>
+      case Some(stats) =>
         // iteration >0
-        //tncIterationStats.getRideHailStatsInfo()
+        rideHailingManager.getIdleVehicles().values map { v =>
+          val id: Id[Vehicle] = v.vehicleId
+          val coord: Coord = v.currentLocation.loc
+
+          val iv = stats.getRideHailStatsInfo(coord, tick).get.sumOfIdlingVehicles
+          val rr = stats.getRideHailStatsInfo(coord, tick).get.sumOfRequestedRides
+          val wt = stats.getRideHailStatsInfo(coord, tick).get.sumOfWaitingtimes
+
+          ()
+
+          // TODO how to access ride requests data from this method?
+          // TODO will target location be set as pickup location of specific ride request?
+        }
 
       case None =>
         // iteration 0
     }
 
-
-    if (rideHailingManager.getIdleVehicles().size >= 2) {
-      val origin=rideHailingManager.getIdleVehicles().values.toVector
-      val destination=scala.util.Random.shuffle(origin)
-      (for ((o,d)<-(origin zip destination)) yield (o.vehicleId,d.currentLocation.loc)) //.splitAt(4)._1
-    } else {
-      Vector()
-    }
+    Vector.empty[(Id[Vehicle], Location)]
   }
 }
-
-
-
-
