@@ -15,17 +15,15 @@ class RepositioningWithLowWaitingTimes(val rideHailingManager: RideHailingManage
 
   def allocateVehicles(allocationsDuringReservation: Vector[(VehicleAllocationRequest, Option[VehicleAllocation])]): Vector[(VehicleAllocationRequest, Option[VehicleAllocation])] = {
     log.error("batch processing is not implemented for DefaultRideHailResourceAllocationManager")
-    return allocationsDuringReservation
+    allocationsDuringReservation
   }
 
   def repositionVehicles(tick: Double): Vector[(Id[Vehicle], Location)] = {
 
     /*
-
     -> which tnc to reposition?
       -> go through all idle tncs
       -> if taxi
-
 
       -> find areas with taxis with long idle time
         -> threshhold parameter min idle time and max share to reposition
@@ -43,7 +41,6 @@ class RepositioningWithLowWaitingTimes(val rideHailingManager: RideHailingManage
 			=> talk at Matsim wrkshop: one without distribution, random, this method.
 				=> demonstrate
 
-
 				look at demand in 10min at the TAZ around me
 
 				probabilityOfServing(taz_i) = score(taz_i) / sumOfScores
@@ -57,9 +54,11 @@ class RepositioningWithLowWaitingTimes(val rideHailingManager: RideHailingManage
           val id: Id[Vehicle] = v.vehicleId
           val coord: Coord = v.currentLocation.loc
 
-          val iv = stats.getRideHailStatsInfo(coord, tick).get.sumOfIdlingVehicles
-          val rr = stats.getRideHailStatsInfo(coord, tick).get.sumOfRequestedRides
-          val wt = stats.getRideHailStatsInfo(coord, tick).get.sumOfWaitingtimes
+          val tazId: String = stats.tazTreeMap.getTAZ(coord.getX, coord.getY).tazId.toString
+
+          val sumIV: Double = stats.getRideHailStatsInfo(coord, tick).get.sumOfIdlingVehicles
+          val sumRR: Double = stats.getRideHailStatsInfo(coord, tick).get.sumOfRequestedRides
+          val sumWT: Double = stats.getRideHailStatsInfo(coord, tick).get.sumOfWaitingtimes
 
           ()
 
