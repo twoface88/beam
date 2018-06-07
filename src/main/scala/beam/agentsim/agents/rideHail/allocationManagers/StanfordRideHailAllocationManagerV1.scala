@@ -31,11 +31,7 @@ class StanfordRideHailAllocationManagerV1(val rideHailingManager: RideHailingMan
 
   override def proposeVehicleAllocation(vehicleAllocationRequest: VehicleAllocationRequest): Option[VehicleAllocation] = {
     val rideHailingAgentLocation = rideHailingManager.getClosestIdleRideHailingAgent(vehicleAllocationRequest.pickUpLocation, RideHailingManager.radiusInMeters)
-
-    rideHailingAgentLocation match {
-      case Some(rideHailingAgentLocation) => Some(VehicleAllocation(rideHailingAgentLocation.vehicleId, rideHailingAgentLocation.currentLocation))
-      case None => None
-    }
+    rideHailingAgentLocation.map(loc => VehicleAllocation(loc.vehicleId, loc.currentLocation))
   }
 
   /*
