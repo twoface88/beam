@@ -21,6 +21,7 @@ import java.util.Map;
 public class RideHailStats implements IGraphStats {
 
     private static final String fileName = "RideHailStats";
+    private final IStatComputation<Map<String, List<PathTraversalEvent>>, Map<RideHailDistanceRowModel.GraphType, Double>> computation;
 
     /**
      * Map < IterationNumber, < statsName,Distance > >
@@ -28,6 +29,41 @@ public class RideHailStats implements IGraphStats {
      */
     private Map<Integer, Map<String, Double>> statsMap = new HashMap<>();
     private Map<String, List<PathTraversalEvent>> eventMap = new HashMap<>();
+
+    public static class RailHailComputation implements IStatComputation<Map<String, List<PathTraversalEvent>>, Map<RideHailDistanceRowModel.GraphType, Double>> {
+
+        @Override
+        public Map<RideHailDistanceRowModel.GraphType, Double> compute(Map<String, List<PathTraversalEvent>> stat) {
+            Map<RideHailDistanceRowModel.GraphType, Double> distanceTravelled = new HashMap<>();
+            for (String vehicle : stat.keySet()) {
+                List<PathTraversalEvent> list = stat.get(vehicle);
+                int size = list.size();
+                PathTraversalEvent[] arr = new PathTraversalEvent[size];
+                arr = list.toArray(arr);
+                for (int loopCounter = 0; loopCounter < size; loopCounter++) {
+                    double newDistance = Double.parseDouble(arr[loopCounter].getAttributes().get("length"));
+                    if (arr[loopCounter].getAttributes().get("num_passengers").equals("1")) {
+                        double distance = distanceTravelled.get(RideHailDistanceRowModel.GraphType.PASSENGER_VKT) == null ? 0 : distanceTravelled.get(RideHailDistanceRowModel.GraphType.PASSENGER_VKT);
+                        distance = distance + newDistance;
+                        distanceTravelled.put(RideHailDistanceRowModel.GraphType.PASSENGER_VKT, distance);
+                    } else if (arr[loopCounter].getAttributes().get("num_passengers").equals("0") && loopCounter < (size - 1) && arr[loopCounter + 1].getAttributes().get("num_passengers").equals("1")) {
+                        double distance = distanceTravelled.get(RideHailDistanceRowModel.GraphType.DEAD_HEADING_VKT.toString()) == null ? 0 : distanceTravelled.get(RideHailDistanceRowModel.GraphType.DEAD_HEADING_VKT.toString());
+                        distance = distance + newDistance;
+                        distanceTravelled.put(RideHailDistanceRowModel.GraphType.DEAD_HEADING_VKT, distance);
+                    } else if (arr[loopCounter].getAttributes().get("num_passengers").equals("0")) {
+                        double distance = distanceTravelled.get(RideHailDistanceRowModel.GraphType.REPOSITIONING_VKT) == null ? 0 : distanceTravelled.get(RideHailDistanceRowModel.GraphType.REPOSITIONING_VKT);
+                        distance = distance + newDistance;
+                        distanceTravelled.put(RideHailDistanceRowModel.GraphType.REPOSITIONING_VKT, distance);
+                    }
+                }
+            }
+            return distanceTravelled;
+        }
+    }
+
+    public RideHailStats(IStatComputation<Map<String, List<PathTraversalEvent>>, Map<RideHailDistanceRowModel.GraphType, Double>> computation) {
+        this.computation = computation;
+    }
 
     @Override
     public void resetStats() {
@@ -54,29 +90,7 @@ public class RideHailStats implements IGraphStats {
     @Override
     public void createGraph(IterationEndsEvent event) throws IOException {
 
-        Map<RideHailDistanceRowModel.GraphType, Double> distanceTravelled = new HashMap<>();
-        for (String vehicle : eventMap.keySet()) {
-            List<PathTraversalEvent> list = eventMap.get(vehicle);
-            int size = list.size();
-            PathTraversalEvent[] arr = new PathTraversalEvent[size];
-            arr = list.toArray(arr);
-            for (int loopCounter = 0; loopCounter < size; loopCounter++) {
-                double newDistance = Double.parseDouble(arr[loopCounter].getAttributes().get("length"));
-                if (arr[loopCounter].getAttributes().get("num_passengers").equals("1")) {
-                    double distance = distanceTravelled.get(RideHailDistanceRowModel.GraphType.PASSENGER_VKT) == null ? 0 : distanceTravelled.get(RideHailDistanceRowModel.GraphType.PASSENGER_VKT);
-                    distance = distance + newDistance;
-                    distanceTravelled.put(RideHailDistanceRowModel.GraphType.PASSENGER_VKT, distance);
-                } else if (arr[loopCounter].getAttributes().get("num_passengers").equals("0") && loopCounter < (size - 1) && arr[loopCounter + 1].getAttributes().get("num_passengers").equals("1")) {
-                    double distance = distanceTravelled.get(RideHailDistanceRowModel.GraphType.DEAD_HEADING_VKT) == null ? 0 : distanceTravelled.get(RideHailDistanceRowModel.GraphType.DEAD_HEADING_VKT);
-                    distance = distance + newDistance;
-                    distanceTravelled.put(RideHailDistanceRowModel.GraphType.DEAD_HEADING_VKT, distance);
-                } else if (arr[loopCounter].getAttributes().get("num_passengers").equals("0")) {
-                    double distance = distanceTravelled.get(RideHailDistanceRowModel.GraphType.REPOSITIONING_VKT) == null ? 0 : distanceTravelled.get(RideHailDistanceRowModel.GraphType.REPOSITIONING_VKT);
-                    distance = distance + newDistance;
-                    distanceTravelled.put(RideHailDistanceRowModel.GraphType.REPOSITIONING_VKT, distance);
-                }
-            }
-        }
+        Map<RideHailDistanceRowModel.GraphType, Double> distanceTravelled = computation.compute(eventMap);
         RideHailDistanceRowModel model = GraphUtils.RIDE_HAIL_REVENUE_MAP.get(event.getIteration());
         if (model == null)
             model = new RideHailDistanceRowModel();

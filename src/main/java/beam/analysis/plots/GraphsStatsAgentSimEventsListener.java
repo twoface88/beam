@@ -39,8 +39,8 @@ public class GraphsStatsAgentSimEventsListener implements BasicEventHandler {
     private IGraphStats fuelUsageStats = new FuelUsageStats();
     private IGraphStats modeChoseStats = new ModeChosenStats();
     private IGraphStats personTravelTimeStats = new PersonTravelTimeStats();
-    private IGraphStats rideHailingWaitingStats = new RideHailingWaitingStats();
-    private IGraphStats generalStats = new RideHailStats();
+    private IGraphStats rideHailingWaitingStats = new RideHailingWaitingStats(new RideHailingWaitingStats.WaitingStatsComputation());
+    private IGraphStats generalStats = new RideHailStats(new RideHailStats.RailHailComputation());
     private IGraphStats rideHailingWaitingSingleStats;
 
 
@@ -56,7 +56,8 @@ public class GraphsStatsAgentSimEventsListener implements BasicEventHandler {
         CONTROLLER_IO = controlerIO;
         PathTraversalSpatialTemporalTableGenerator.setVehicles(scenario.getTransitVehicles());
 
-        rideHailingWaitingSingleStats = new RideHailingWaitingSingleStats(beamServices);
+        rideHailingWaitingSingleStats = new RideHailingWaitingSingleStats(beamServices,
+                new RideHailingWaitingSingleStats.SingleStatsComputation());
 
     }
 

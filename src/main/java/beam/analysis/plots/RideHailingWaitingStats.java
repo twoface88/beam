@@ -11,6 +11,7 @@ import org.matsim.api.core.v01.events.Event;
 import org.matsim.api.core.v01.events.PersonEntersVehicleEvent;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.core.controler.events.IterationEndsEvent;
+import org.matsim.core.utils.collections.Tuple;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -27,6 +28,7 @@ public class RideHailingWaitingStats implements IGraphStats {
     private static final String xAxisTitle = "Hour";
     private static final String yAxisTitle = "Waiting Time (frequencies)";
     private static final String fileName = "RideHailWaitingStats";
+    private final IStatComputation<Tuple<List<Double>, Map<Integer, List<Double>>>, Map<Integer, Map<Double, Integer>>> computation;
 
     private double lastMaximumTime = 0;
     private double NUMBER_OF_CATEGORIES = 6.0;
@@ -37,6 +39,66 @@ public class RideHailingWaitingStats implements IGraphStats {
 
     private double waitTimeSum = 0;   //sum of all wait times experienced by customers
     private int rideHailCount = 0;   //later used to calculate average wait time experienced by customers
+
+    public static class WaitingStatsComputation implements IStatComputation<Tuple<List<Double>, Map<Integer, List<Double>>>, Map<Integer, Map<Double, Integer>>> {
+
+        @Override
+        public Map<Integer, Map<Double, Integer>> compute(Tuple<List<Double>, Map<Integer, List<Double>>> stat) {
+            Map<Integer, Map<Double, Integer>> hourModeFrequency = calculateHourlyData(stat.getSecond(), stat.getFirst());
+            return hourModeFrequency;
+        }
+
+        /**
+         * Calculate the data and populate the dataset i.e. "hourModeFrequency"
+         */
+        private Map<Integer, Map<Double, Integer>>
+        calculateHourlyData(Map<Integer, List<Double>> hoursTimesMap, List<Double> categories) {
+
+            Map<Integer, Map<Double, Integer>> hourModeFrequency = new HashMap<>();
+
+            Set<Integer> hours = hoursTimesMap.keySet();
+
+            for (Integer hour : hours) {
+                List<Double> listTimes = hoursTimesMap.get(hour);
+                for (double time : listTimes) {
+                    Double category = getCategory(time, categories);
+
+
+                    Map<Double, Integer> hourData = hourModeFrequency.get(hour);
+                    Integer frequency = 1;
+                    if (hourData != null) {
+                        frequency = hourData.get(category);
+                        frequency = (frequency == null) ? 1 : frequency + 1;
+                    } else {
+                        hourData = new HashMap<>();
+                    }
+                    hourData.put(category, frequency);
+                    hourModeFrequency.put(hour, hourData);
+                }
+            }
+
+            return hourModeFrequency;
+        }
+
+        private Double getCategory(double time, List<Double> categories) {
+            int i = 0;
+            Double categoryUpperBound = null;
+            while (i < categories.size()) {
+                categoryUpperBound = categories.get(i);
+                if (time <= categoryUpperBound) {
+
+                    break;
+                }
+                i++;
+            }
+            return categoryUpperBound;
+        }
+    }
+
+    public RideHailingWaitingStats(IStatComputation<Tuple<List<Double>, Map<Integer, List<Double>>>,
+            Map<Integer, Map<Double, Integer>>> computation) {
+        this.computation = computation;
+    }
 
     @Override
     public void resetStats() {
@@ -50,22 +112,22 @@ public class RideHailingWaitingStats implements IGraphStats {
     @Override
     public void processStats(Event event) {
 
-        if (event instanceof ModeChoiceEvent){
+        if (event instanceof ModeChoiceEvent) {
 
             String mode = event.getAttributes().get("mode");
-            if(mode.equalsIgnoreCase("ride_hailing")) {
+            if (mode.equalsIgnoreCase("ride_hailing")) {
 
                 ModeChoiceEvent modeChoiceEvent = (ModeChoiceEvent) event;
                 Id<Person> personId = modeChoiceEvent.getPersonId();
                 rideHailingWaiting.put(personId.toString(), event);
             }
-        } else if(event instanceof PersonEntersVehicleEvent) {
+        } else if (event instanceof PersonEntersVehicleEvent) {
 
-            PersonEntersVehicleEvent personEntersVehicleEvent = (PersonEntersVehicleEvent)event;
+            PersonEntersVehicleEvent personEntersVehicleEvent = (PersonEntersVehicleEvent) event;
             Id<Person> personId = personEntersVehicleEvent.getPersonId();
             String _personId = personId.toString();
 
-            if(rideHailingWaiting.containsKey(personId.toString())) {
+            if (rideHailingWaiting.containsKey(personId.toString())) {
 
                 ModeChoiceEvent modeChoiceEvent = (ModeChoiceEvent) rideHailingWaiting.get(_personId);
                 double difference = personEntersVehicleEvent.getTime() - modeChoiceEvent.getTime();
@@ -85,8 +147,8 @@ public class RideHailingWaitingStats implements IGraphStats {
         model.setRideHailWaitingTimeSum(this.waitTimeSum);
         model.setTotalRideHailCount(this.rideHailCount);
         GraphUtils.RIDE_HAIL_REVENUE_MAP.put(event.getIteration(), model);
-        List<Double> listOfBounds = getCategories();
-        Map<Integer, Map<Double, Integer>> hourModeFrequency = calculateHourlyData(hoursTimesMap, listOfBounds);
+        Map<Integer, Map<Double, Integer>> hourModeFrequency = computation.compute(new Tuple<>(getCategories(), hoursTimesMap));
+
         CategoryDataset modesFrequencyDataset = buildModesFrequencyDatasetForGraph(hourModeFrequency);
         if (modesFrequencyDataset != null)
             createModesFrequencyGraph(modesFrequencyDataset, event.getIteration());
@@ -100,11 +162,10 @@ public class RideHailingWaitingStats implements IGraphStats {
     }
 
 
-
     private void processRideHailingWaitingTimes(Event event, double waitingTime) {
         int hour = GraphsStatsAgentSimEventsListener.getEventHour(event.getTime());
 
-        waitingTime = waitingTime/60;
+        waitingTime = waitingTime / 60;
 
         if (waitingTime > lastMaximumTime) {
             lastMaximumTime = waitingTime;
@@ -120,38 +181,9 @@ public class RideHailingWaitingStats implements IGraphStats {
         hoursTimesMap.put(hour, timeList);
     }
 
-    private double[] getHoursDataPerTimeRange(Double category, int maxHour, Map<Integer, Map<Double, Integer>> hourModeFrequency) {
-        double[] timeRangeOccurrencePerHour = new double[maxHour + 1];
-
-        for (int hour = 0; hour <= maxHour; hour++) {
-            Map<Double, Integer> hourData = hourModeFrequency.get(hour);
-            timeRangeOccurrencePerHour[hour] = (hourData == null || hourData.get(category) == null) ? 0 : hourData.get(category);
-
-        }
-        return timeRangeOccurrencePerHour;
-    }
-
-    private double[][] buildModesFrequencyDataset(Map<Integer, Map<Double, Integer>> hourModeFrequency) {
-
-        List<Integer> hoursList = GraphsStatsAgentSimEventsListener.getSortedIntegerList(hourModeFrequency.keySet());
-
-        if (hoursList.isEmpty())
-            return null;
-
-        int maxHour = hoursList.get(hoursList.size() - 1);
-
-        List<Double> categories = getCategories();
-        double[][] dataset = new double[categories.size()][maxHour + 1];
-
-        for (int i = 0; i < categories.size(); i++) {
-            dataset[i] = getHoursDataPerTimeRange(categories.get(i), maxHour, hourModeFrequency);
-        }
-        return dataset;
-    }
-
     private CategoryDataset buildModesFrequencyDatasetForGraph(Map<Integer, Map<Double, Integer>> hourModeFrequency) {
         CategoryDataset categoryDataset = null;
-        double[][] dataset = buildModesFrequencyDataset(hourModeFrequency);
+        double[][] dataset = buildModesFrequencyDataset(hourModeFrequency, getCategories());
         if (dataset != null)
             categoryDataset = DatasetUtilities.createCategoryDataset("Time ", "", dataset);
         return categoryDataset;
@@ -172,7 +204,33 @@ public class RideHailingWaitingStats implements IGraphStats {
         GraphUtils.saveJFreeChartAsPNG(chart, graphImageFile, GraphsStatsAgentSimEventsListener.GRAPH_WIDTH, GraphsStatsAgentSimEventsListener.GRAPH_HEIGHT);
     }
 
+    private double[][] buildModesFrequencyDataset(Map<Integer, Map<Double, Integer>> hourModeFrequency, List<Double> categories) {
 
+        List<Integer> hoursList = GraphsStatsAgentSimEventsListener.getSortedIntegerList(hourModeFrequency.keySet());
+
+        if (hoursList.isEmpty())
+            return null;
+
+        int maxHour = hoursList.get(hoursList.size() - 1);
+
+        double[][] dataset = new double[categories.size()][maxHour + 1];
+
+        for (int i = 0; i < categories.size(); i++) {
+            dataset[i] = getHoursDataPerTimeRange(categories.get(i), maxHour, hourModeFrequency);
+        }
+        return dataset;
+    }
+
+    private double[] getHoursDataPerTimeRange(Double category, int maxHour, Map<Integer, Map<Double, Integer>> hourModeFrequency) {
+        double[] timeRangeOccurrencePerHour = new double[maxHour + 1];
+
+        for (int hour = 0; hour <= maxHour; hour++) {
+            Map<Double, Integer> hourData = hourModeFrequency.get(hour);
+            timeRangeOccurrencePerHour[hour] = (hourData == null || hourData.get(category) == null) ? 0 : hourData.get(category);
+
+        }
+        return timeRangeOccurrencePerHour;
+    }
 
     private void writeToCSV(int iterationNumber, Map<Integer, Map<Double, Integer>> hourModeFrequency) throws IOException {
         String csvFileName = GraphsStatsAgentSimEventsListener.CONTROLLER_IO.getIterationFilename(iterationNumber, fileName + ".csv");
@@ -189,7 +247,7 @@ public class RideHailingWaitingStats implements IGraphStats {
             List<Double> categories = getCategories();
 
 
-            for (int j = 0; j < categories.size(); j++){
+            for (int j = 0; j < categories.size(); j++) {
 
                 Double category = categories.get(j);
                 Double _category = getRoundedCategoryUpperBound(category);
@@ -213,39 +271,6 @@ public class RideHailingWaitingStats implements IGraphStats {
         }
     }
 
-    /**
-     * Calculate the data and populate the dataset i.e. "hourModeFrequency"
-     */
-    private synchronized Map<Integer, Map<Double, Integer>>
-        calculateHourlyData(Map<Integer, List<Double>> hoursTimesMap, List<Double> categories) {
-
-        Map<Integer, Map<Double, Integer>> hourModeFrequency = new HashMap<>();
-
-        Set<Integer> hours = hoursTimesMap.keySet();
-
-        for (Integer hour : hours) {
-            List<Double> listTimes = hoursTimesMap.get(hour);
-            for (double time : listTimes) {
-                Double category = getCategory(time, categories);
-
-
-                Map<Double, Integer> hourData = hourModeFrequency.get(hour);
-                Integer frequency = 1;
-                if (hourData != null) {
-                    frequency = hourData.get(category);
-                    frequency = (frequency == null) ? 1 : frequency + 1;
-                } else {
-                    hourData = new HashMap<>();
-                }
-                hourData.put(category, frequency);
-                hourModeFrequency.put(hour, hourData);
-            }
-        }
-
-        return hourModeFrequency;
-    }
-
-
     // Utility Methods
     private List<Double> getCategories() {
 
@@ -256,11 +281,11 @@ public class RideHailingWaitingStats implements IGraphStats {
 
         //listOfBounds.add(0.0);
 
-        for(double x = bound; x < upperBound; x += bound){
+        for (double x = bound; x < upperBound; x += bound) {
             listOfBounds.add(x);
         }
 
-        if(!listOfBounds.isEmpty()) {
+        if (!listOfBounds.isEmpty()) {
             listOfBounds.set(listOfBounds.size() - 1, lastMaximumTime);
             Collections.sort(listOfBounds);
         }
@@ -268,35 +293,21 @@ public class RideHailingWaitingStats implements IGraphStats {
         return listOfBounds;
     }
 
-    private Double getCategory(double time, List<Double> categories) {
-        int i = 0;
-        Double categoryUpperBound = null;
-        while (i < categories.size()) {
-            categoryUpperBound = categories.get(i);
-            if (time <= categoryUpperBound) {
-
-                break;
-            }
-            i++;
-        }
-        return categoryUpperBound;
-    }
-
-    private List<String> getLegends(List<Double> categories){
+    private List<String> getLegends(List<Double> categories) {
 
         List<String> legends = new ArrayList<>();
-        for(int i = 0; i<categories.size(); i++){
+        for (int i = 0; i < categories.size(); i++) {
 
             Double category = categories.get(i);
             double legend = getRoundedCategoryUpperBound(category);
 
-            legends.add( legend + "_min");
+            legends.add(legend + "_min");
         }
         //Collections.sort(legends);
         return legends;
     }
 
-    private double getRoundedCategoryUpperBound(double category){
-        return Math.round(category * 100)/100.0;
+    private double getRoundedCategoryUpperBound(double category) {
+        return Math.round(category * 100) / 100.0;
     }
 }
