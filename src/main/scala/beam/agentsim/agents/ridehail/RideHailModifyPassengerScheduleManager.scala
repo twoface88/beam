@@ -20,6 +20,13 @@ import org.matsim.vehicles.Vehicle
 
 import scala.collection.mutable
 
+/*
+The main purpose of this class:
+
+1.) repositioning: keep track of open routing requests
+2.)
+
+ */
 class RideHailModifyPassengerScheduleManager(
   val log: LoggingAdapter,
   val rideHailManager: ActorRef,
@@ -460,7 +467,7 @@ class RideHailModifyPassengerScheduleManager(
     getWithVehicleIds(vehicleId).isEmpty
   }
 
-  def checkInResource(
+  def handleNotifyVehicleResourceIdle(
     vehicleId: Id[Vehicle],
     availableIn: Option[SpaceTime],
     passengerSchedule: Option[PassengerSchedule]
