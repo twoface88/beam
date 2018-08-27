@@ -23,8 +23,9 @@ import scala.collection.mutable
 /*
 The main purpose of this class:
 
-1.) repositioning: keep track of open routing requests -> release trigger
-2.) av
+1.) repositioning: keep track of open routing requests
+    RideHailAllocationManagerTimeout message -> release trigger after all processing completed
+2.) avoid conflicts between repositioning and reservations (reservation can overwrite repositioning at any time, but not vice versa).
 
  */
 class RideHailModifyPassengerScheduleManager(
@@ -272,6 +273,9 @@ class RideHailModifyPassengerScheduleManager(
     log.debug("printState END")
   }
 
+  /*
+  Initialize tigger to be released when all repositioning requests processed.
+   */
   def startWaveOfRepositioningRequests(tick: Double, triggerId: Long): Unit = {
     log.debug(
       "RepositioningTimeout(" + tick + ") - START repositioning waive - triggerId(" + triggerId + ")"
@@ -292,6 +296,9 @@ class RideHailModifyPassengerScheduleManager(
     nextCompleteNoticeRideHailAllocationTimeout = CompletionNotice(triggerId, Vector(timerMessage))
   }
 
+  /*
+      send scheduler completion notice for current timeout message - send out when all messages have been processed.
+   */
   def sendoutAckMessageToSchedulerForRideHailAllocationmanagerTimeout(): Unit = {
     log.debug(
       "sending ACK to scheduler for next repositionTimeout (" + nextCompleteNoticeRideHailAllocationTimeout.id + ")"
@@ -318,6 +325,10 @@ class RideHailModifyPassengerScheduleManager(
 
   var ignoreErrorPrint = true
 
+  /*
+  Whenever a repositioning request has been processed (successful or failure), this method is called to decrease the number of requests which are still awaited.
+  When no requests are awaited anymore, this method sends a completion notice to the scheduler.
+   */
   def modifyPassengerScheduleAckReceivedForRepositioning(
     triggersToSchedule: Seq[BeamAgentScheduler.ScheduleTrigger]
   ): Unit = {
