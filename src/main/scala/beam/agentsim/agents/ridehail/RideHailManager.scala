@@ -437,7 +437,7 @@ class RideHailManager(
         }
       }
 
-      modifyPassengerScheduleManager.startWaiveOfRepositioningRequests(tick, triggerId)
+      modifyPassengerScheduleManager.startWaveOfRepositioningRequests(tick, triggerId)
 
       log.debug("getIdleVehicles().size:{}", getIdleVehicles.size)
       getIdleVehicles.foreach(x => log.debug("getIdleVehicles(): {}", x._1.toString))

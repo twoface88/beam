@@ -23,8 +23,8 @@ import scala.collection.mutable
 /*
 The main purpose of this class:
 
-1.) repositioning: keep track of open routing requests
-2.)
+1.) repositioning: keep track of open routing requests -> release trigger
+2.) av
 
  */
 class RideHailModifyPassengerScheduleManager(
@@ -272,7 +272,7 @@ class RideHailModifyPassengerScheduleManager(
     log.debug("printState END")
   }
 
-  def startWaiveOfRepositioningRequests(tick: Double, triggerId: Long): Unit = {
+  def startWaveOfRepositioningRequests(tick: Double, triggerId: Long): Unit = {
     log.debug(
       "RepositioningTimeout(" + tick + ") - START repositioning waive - triggerId(" + triggerId + ")"
     )
