@@ -202,15 +202,18 @@ class RideHailManager(
         .foreach(driver => {
           val rideHailAgentLocation =
             RideHailAgentLocation(driver, vehicleId, whenWhere)
+
+          // the following condition was added to avoid double booking of vehicles (e.g. if a reposition makes a vehicle available,
+          // which has been reserved/pending reservation, a second reservation request for the same vehicle might be initiated).
+
           if (modifyPassengerScheduleManager
                 .noPendingReservations(vehicleId) || modifyPassengerScheduleManager
                 .isPendingReservationEnding(vehicleId, passengerSchedule)) {
             log.debug("Making available: {}", vehicleId)
-            // we still might have some ongoing resrvation in going on
             makeAvailable(rideHailAgentLocation)
           }
           modifyPassengerScheduleManager
-            .checkInResource(vehicleId, Some(whenWhere), Some(passengerSchedule))
+            .handleNotifyVehicleResourceIdle(vehicleId, Some(whenWhere), Some(passengerSchedule))
           vehicleFuelLevel.put(vehicleId, fuelLevel)
         })
 
@@ -243,7 +246,8 @@ class RideHailManager(
               vehicleId,
               whenWhere.get.time
             )
-            modifyPassengerScheduleManager.checkInResource(vehicleId, whenWhere, None)
+            modifyPassengerScheduleManager
+              .handleNotifyVehicleResourceIdle(vehicleId, whenWhere, None)
             driver ! GetBeamVehicleFuelLevel
           })
       }
