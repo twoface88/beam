@@ -146,6 +146,7 @@ public class RealizedModeGraphTest {
         log.error("actual car test 5-  " + actaulCarResult);
         log.error("actual ride_hail test 5- " + actaulRideHailResult);
         log.error("actal others test 5- " + actaulOtherResult);
+        log.debug("actual other " + actaulOtherResult);
 
         assertEquals(expectedWalkResult, actaulWalkResult);
         assertEquals(expectedCarResult, actaulCarResult);
