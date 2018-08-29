@@ -5,8 +5,9 @@ import beam.router.Modes.BeamMode
 import beam.router.RoutingModel.{BeamLeg, BeamPath, EmbodiedBeamLeg}
 import org.matsim.api.core.v01.Id
 import org.matsim.api.core.v01.events.{LinkEnterEvent, LinkLeaveEvent}
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.{FlatSpec, Ignore, Matchers}
 
+@Ignore
 class RoutingModelSpec extends FlatSpec with Matchers {
 
   it should "produce link events from a typical car leg, given a constant travel time function" in {

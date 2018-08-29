@@ -15,7 +15,7 @@ import static org.junit.Assert.assertEquals;
 
 public class ModeChosenGraphTest {
     private ModeChosenStats modeChosenStats = new ModeChosenStats();
-    private static final Logger log = LoggerFactory.getLogger(RealizedModeGraphTest.class);
+    private static final Logger log = LoggerFactory.getLogger(ModeChosenStats.class);
 
 
     @BeforeClass
@@ -29,7 +29,7 @@ public class ModeChosenGraphTest {
         int expectedResult = 33;
         int maxHour = getMaxHour(modeChosenStats.getSortedHourModeFrequencyList());
         int actualResult = modeChosenStats.getHoursDataCountOccurrenceAgainstMode(CAR, maxHour);
-        log.error("car " + actualResult);
+        log.debug("car " + actualResult);
 
         assertEquals(expectedResult, actualResult);
     }
@@ -39,7 +39,7 @@ public class ModeChosenGraphTest {
         int expectedResult = 1;
         int maxHour = getMaxHour(modeChosenStats.getSortedHourModeFrequencyList());
         int actualResult = modeChosenStats.getHoursDataCountOccurrenceAgainstMode(DRIVE_TRANS, maxHour);
-        log.error("drive trains " + actualResult);
+        log.debug("drive trains " + actualResult);
 
         assertEquals(expectedResult, actualResult);
 
@@ -50,7 +50,7 @@ public class ModeChosenGraphTest {
         int expectedResult = 20;
         int maxHour = getMaxHour(modeChosenStats.getSortedHourModeFrequencyList());
         int actualResult = modeChosenStats.getHoursDataCountOccurrenceAgainstMode(RIDE_HAIL, maxHour);
-        log.error("ride hail " + actualResult);
+        log.debug("ride hail " + actualResult);
 
         assertEquals(expectedResult, actualResult);
 
@@ -61,7 +61,7 @@ public class ModeChosenGraphTest {
         int expectedResult = 41;
         int maxHour = getMaxHour(modeChosenStats.getSortedHourModeFrequencyList());
         int actualResult = modeChosenStats.getHoursDataCountOccurrenceAgainstMode(WALK, maxHour);
-        log.error("walk " + actualResult);
+        log.debug("walk " + actualResult);
 
         assertEquals(expectedResult, actualResult);
 
@@ -72,7 +72,7 @@ public class ModeChosenGraphTest {
         int expectedResult = 11;
         int maxHour = getMaxHour(modeChosenStats.getSortedHourModeFrequencyList());
         int actualResult = modeChosenStats.getHoursDataCountOccurrenceAgainstMode(WALK_TRANS, maxHour);
-        log.error("walk trasn " + actualResult);
+        log.debug("walk trasn " + actualResult);
 
         assertEquals(expectedResult, actualResult);
 
@@ -96,7 +96,7 @@ public class ModeChosenGraphTest {
         actualResultOfMode[3] = modeChosenStats.getHoursDataCountOccurrenceAgainstMode(WALK, maxHour, 6);
         actualResultOfMode[4] = modeChosenStats.getHoursDataCountOccurrenceAgainstMode(WALK_TRANS, maxHour, 6);
 
-        log.error("array " + actualResultOfMode);
+        log.debug("array " + actualResultOfMode);
 
         assertArrayEquals(expectedResultOfMode, actualResultOfMode);
     }

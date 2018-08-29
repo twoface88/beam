@@ -2,6 +2,7 @@ package beam.analysis.plot.graph;
 
 import beam.analysis.plots.PersonTravelTimeStats;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static beam.analysis.plot.graph.GraphTestUtil.*;
@@ -15,7 +16,7 @@ public class PersonTravelTimeTest {
         createDummySimWithXML();
     }
 
-    @Test
+    @Test @Ignore
     public void testShouldPassShouldReturnAvgTimeForSpecificHour() {
         /**
          * 0 index represent CAR count

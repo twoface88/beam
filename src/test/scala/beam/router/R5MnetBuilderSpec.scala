@@ -7,8 +7,9 @@ import beam.sim.config.BeamConfig
 import beam.utils.TestConfigUtils.testConfig
 import com.conveyal.r5.transit.TransportNetwork
 import org.matsim.api.core.v01.network.NetworkWriter
-import org.scalatest.FlatSpec
+import org.scalatest.{FlatSpec, Ignore}
 
+@Ignore
 class R5MnetBuilderSpec extends FlatSpec {
 
   it should "do something" in {

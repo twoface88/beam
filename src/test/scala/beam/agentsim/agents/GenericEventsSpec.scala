@@ -8,8 +8,9 @@ import beam.utils.FileUtils
 import org.matsim.core.api.experimental.events.EventsManager
 import org.matsim.core.events.handler.BasicEventHandler
 import org.matsim.core.scenario.{MutableScenario, ScenarioUtils}
-import org.scalatest.{BeforeAndAfterAll, WordSpecLike}
+import org.scalatest.{BeforeAndAfterAll, Ignore, WordSpecLike}
 
+@Ignore
 trait GenericEventsSpec
     extends WordSpecLike
     with IntegrationSpecCommon

@@ -1,8 +1,9 @@
 package beam.tnctoday
 
 import json.converter.{TazOutput, TncToday}
-import org.scalatest.{Matchers, WordSpecLike}
+import org.scalatest.{Ignore, Matchers, WordSpecLike}
 
+@Ignore
 class TnctodayConversionSpec extends WordSpecLike with Matchers {
 
   lazy val completedStats = TncToday.completeStats(inputData)

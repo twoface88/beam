@@ -5,7 +5,9 @@ import java.io.File
 import beam.sim.BeamHelper
 import beam.sim.config.BeamConfig
 import com.typesafe.config.{Config, ConfigValueFactory}
+import org.scalatest.Ignore
 
+@Ignore
 class StartWithCustomConfig(val config: Config)
     extends EventsFileHandlingCommon
     with IntegrationSpecCommon

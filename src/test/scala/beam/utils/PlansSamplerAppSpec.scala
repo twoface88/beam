@@ -5,8 +5,9 @@ import beam.utils.plansampling.PlansSampler
 import org.matsim.core.config.ConfigUtils
 import org.matsim.core.scenario.{MutableScenario, ScenarioUtils}
 import org.matsim.utils.objectattributes.ObjectAttributes
-import org.scalatest.{Matchers, WordSpecLike}
+import org.scalatest.{Ignore, Matchers, WordSpecLike}
 
+@Ignore
 class PlansSamplerAppSpec extends WordSpecLike with Matchers {
 
   val inputData: Array[String] = Array(

@@ -12,6 +12,7 @@ import org.scalatest._
 
 import scala.language.postfixOps
 
+@Ignore
 class SfLightRouterSpec extends AbstractSfLightSpec with Inside with LoneElement {
   "A router" must {
     "respond with a route to a first reasonable RoutingRequest" in {

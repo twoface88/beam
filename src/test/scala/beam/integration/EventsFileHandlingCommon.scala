@@ -4,9 +4,11 @@ import java.io.File
 
 import beam.sim.config.BeamConfig
 import org.matsim.core.config.Config
+import org.scalatest.Ignore
 
 import scala.io.Source
 
+@Ignore
 trait EventsFileHandlingCommon {
 
   def getListIDsWithTag(file: File, tagIgnore: String, positionID: Int): List[String] = {

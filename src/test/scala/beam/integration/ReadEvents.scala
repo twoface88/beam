@@ -2,6 +2,9 @@ package beam.integration
 
 import java.io.File
 
+import org.scalatest.Ignore
+
+@Ignore
 trait ReadEvents {
 
   def getListTagsFromFile(

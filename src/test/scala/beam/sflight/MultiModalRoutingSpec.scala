@@ -5,9 +5,11 @@ import beam.agentsim.events.SpaceTime
 import beam.router.BeamRouter._
 import beam.router.{BeamRouter, Modes, RoutingModel}
 import org.matsim.api.core.v01.{Coord, Id}
+import org.scalatest.Ignore
 
 import scala.language.postfixOps
 
+@Ignore
 class MultiModalRoutingSpec extends AbstractSfLightSpec {
 
   /*

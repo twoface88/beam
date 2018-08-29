@@ -14,11 +14,12 @@ import org.matsim.households.{Household, HouseholdImpl, HouseholdsImpl}
 import org.matsim.utils.objectattributes.ObjectAttributes
 import org.matsim.vehicles.{Vehicle, VehicleType, VehicleUtils, Vehicles}
 import org.scalatest.mockito.MockitoSugar
-import org.scalatest.{FlatSpec, GivenWhenThen, Matchers}
+import org.scalatest.{FlatSpec, GivenWhenThen, Ignore, Matchers}
 
 import scala.collection.{immutable, JavaConverters}
 import scala.util.Random
 
+@Ignore
 class ChainBasedTourAllocatorSpec
     extends FlatSpec
     with Matchers

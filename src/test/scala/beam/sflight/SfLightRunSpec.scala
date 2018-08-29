@@ -14,12 +14,12 @@ import org.matsim.api.core.v01.events.Event
 import org.matsim.core.controler.AbstractModule
 import org.matsim.core.events.handler.BasicEventHandler
 import org.matsim.core.scenario.{MutableScenario, ScenarioUtils}
-import org.scalatest.{BeforeAndAfterAllConfigMap, ConfigMap, Matchers, WordSpecLike}
+import org.scalatest._
 
 /**
   * Created by colinsheppard
   */
-
+@Ignore
 class SfLightRunSpec
     extends WordSpecLike
     with Matchers

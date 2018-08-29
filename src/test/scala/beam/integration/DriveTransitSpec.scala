@@ -11,11 +11,12 @@ import org.matsim.api.core.v01.events.{Event, PersonArrivalEvent, PersonDepartur
 import org.matsim.core.controler.AbstractModule
 import org.matsim.core.events.handler.BasicEventHandler
 import org.matsim.core.scenario.{MutableScenario, ScenarioUtils}
-import org.scalatest.{Matchers, WordSpecLike}
+import org.scalatest.{Ignore, Matchers, WordSpecLike}
 
 /**
   * Created by colinsheppard 2018-05-14
   */
+@Ignore
 class DriveTransitSpec extends WordSpecLike with Matchers with BeamHelper {
 
   /*

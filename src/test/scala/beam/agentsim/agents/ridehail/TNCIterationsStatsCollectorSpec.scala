@@ -2,8 +2,9 @@ package beam.agentsim.agents.ridehail
 
 import beam.agentsim.agents.GenericEventsSpec
 import org.matsim.core.events.EventsUtils
-import org.scalatest.Matchers
+import org.scalatest.{Ignore, Matchers}
 
+@Ignore
 class TNCIterationsStatsCollectorSpec extends GenericEventsSpec with Matchers {
 
   "A TNC Iterations Stats Collector " must {

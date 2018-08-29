@@ -2,13 +2,14 @@ package beam.agentsim.agents.choice.logit
 
 import beam.agentsim.agents.choice.logit.MultinomialLogit.MnlData
 import beam.sim.BeamHelper
-import org.scalatest.{Matchers, WordSpecLike}
+import org.scalatest.{Ignore, Matchers, WordSpecLike}
 
 import scala.util.Random
 
 /**
   * BEAM
   */
+@Ignore
 class MultinomialLogitSpec extends WordSpecLike with Matchers with BeamHelper {
 
   "An MNL Model" must {

@@ -2,7 +2,9 @@ package beam.integration
 
 import beam.utils.TestConfigUtils.testConfig
 import com.typesafe.config.{Config, ConfigValueFactory}
+import org.scalatest.Ignore
 
+@Ignore
 trait IntegrationSpecCommon {
   private val LAST_ITER_CONF_PATH = "matsim.modules.controler.lastIteration"
 

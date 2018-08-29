@@ -12,12 +12,13 @@ import org.matsim.core.events.{EventsUtils, MatsimEventsReader}
 import org.matsim.core.network.io.MatsimNetworkReader
 import org.matsim.core.scenario.ScenarioUtils
 import org.matsim.core.trafficmonitoring.TravelTimeCalculator
-import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
+import org.scalatest.{BeforeAndAfterAll, Ignore, Matchers, WordSpecLike}
 
 import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
 import scala.xml.XML
 
+@Ignore
 class BeamCalcLinkStatsSpec extends WordSpecLike with Matchers with BeforeAndAfterAll {
 
   private val BASE_PATH = new File("").getAbsolutePath

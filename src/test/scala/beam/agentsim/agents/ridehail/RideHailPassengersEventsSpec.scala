@@ -10,11 +10,12 @@ import org.matsim.api.core.v01.events.{Event, PersonEntersVehicleEvent, PersonLe
 import org.matsim.core.api.experimental.events.EventsManager
 import org.matsim.core.events.handler.BasicEventHandler
 import org.matsim.core.scenario.{MutableScenario, ScenarioUtils}
-import org.scalatest.{Matchers, WordSpecLike}
+import org.scalatest.{Ignore, Matchers, WordSpecLike}
 
 import scala.collection.concurrent.TrieMap
 import scala.collection.mutable
 
+@Ignore
 class RideHailPassengersEventsSpec
     extends WordSpecLike
     with Matchers

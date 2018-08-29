@@ -3,10 +3,11 @@ package beam.router.gtfs
 import java.nio.file.{Path, Paths}
 
 import beam.router.gtfs.FareCalculator._
-import org.scalatest.WordSpecLike
+import org.scalatest.{Ignore, WordSpecLike}
 
 import scala.language.postfixOps
 
+@Ignore
 class FareCalculatorSpec extends WordSpecLike {
 
   "Using sf-light calculator" when {

@@ -2,14 +2,11 @@ package beam.integration
 
 import scala.collection.immutable.Queue
 import scala.collection.mutable.ArrayBuffer
-
 import org.matsim.api.core.v01.events.Event
 import org.matsim.core.events.{EventsUtils, MatsimEventsReader}
 import org.matsim.core.events.handler.BasicEventHandler
-
 import com.typesafe.config.ConfigValueFactory
-import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
-
+import org.scalatest.{BeforeAndAfterAll, Ignore, Matchers, WordSpecLike}
 import beam.agentsim.events.{
   LeavingParkingEventAttrs,
   ModeChoiceEvent,
@@ -18,6 +15,7 @@ import beam.agentsim.events.{
 }
 import beam.sim.BeamHelper
 
+@Ignore
 class ParkingSpec
     extends WordSpecLike
     with BeforeAndAfterAll

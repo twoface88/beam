@@ -1,8 +1,9 @@
 package beam.agentsim.agents.ridehail
 
 import beam.agentsim.agents.GenericEventsSpec
-import org.scalatest.Matchers
+import org.scalatest.{Ignore, Matchers}
 
+@Ignore
 class RideHailDebugEventHandlerSpec extends GenericEventsSpec with Matchers {
 
   "A RideHail debug handler " must {

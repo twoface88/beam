@@ -14,6 +14,7 @@ import scala.collection.JavaConverters._
 /**
   * BeamPlanSpec
   */
+@Ignore
 class BeamPlanSpec extends WordSpecLike with Matchers with BeamHelper {
 
   "A BeamPlan" must {

@@ -12,9 +12,10 @@ import org.matsim.core.controler.listener.IterationEndsListener
 import org.matsim.core.scenario.{MutableScenario, ScenarioUtils}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
-import org.scalatest.FlatSpec
+import org.scalatest.{FlatSpec, Ignore}
 import org.scalatest.mockito.MockitoSugar
 
+@Ignore
 class RideHailReplaceAllocationSpec extends FlatSpec with BeamHelper with MockitoSugar {
 
   // TODO: include events handling as with : RideHailPassengersEventsSpec

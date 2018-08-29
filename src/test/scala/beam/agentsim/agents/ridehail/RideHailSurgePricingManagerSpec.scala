@@ -15,7 +15,7 @@ import org.matsim.core.utils.misc.Time
 import org.matsim.vehicles.Vehicle
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
-import org.scalatest.{Matchers, WordSpecLike}
+import org.scalatest.{Ignore, Matchers, WordSpecLike}
 
 import scala.collection.JavaConverters._
 import scala.collection.concurrent.TrieMap
@@ -23,6 +23,7 @@ import scala.util.{Random, Try}
 
 class RideHailSurgePricingManagerSpec extends WordSpecLike with Matchers with MockitoSugar {
 
+  @Ignore
   val testConfigFileName = "test/input/beamville/beam.conf"
   val config: Config = testConfig(testConfigFileName)
   val vehicles = TrieMap[Id[Vehicle], BeamVehicle]()

@@ -56,7 +56,7 @@ import org.matsim.households.{Household, HouseholdsFactoryImpl}
 import org.matsim.vehicles._
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
-import org.scalatest.{BeforeAndAfterAll, FunSpecLike}
+import org.scalatest.{BeforeAndAfterAll, FunSpecLike, Ignore}
 
 import scala.collection.concurrent.TrieMap
 import scala.collection.{mutable, JavaConverters}
@@ -65,6 +65,7 @@ import scala.concurrent.Await
 /**
   * Created by sfeygin on 2/7/17.
   */
+@Ignore
 class OtherPersonAgentSpec
     extends TestKit(
       ActorSystem(
