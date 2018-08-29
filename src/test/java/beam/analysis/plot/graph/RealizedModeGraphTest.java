@@ -1,11 +1,11 @@
 package beam.analysis.plot.graph;
 
 import beam.analysis.plots.RealizedModeStats;
+import org.apache.log4j.Logger;
+import org.apache.log4j.spi.LoggerFactory;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
@@ -14,8 +14,6 @@ import static org.junit.Assert.assertEquals;
 
 public class RealizedModeGraphTest {
     private RealizedModeStats realizedModeStats = new RealizedModeStats();
-    private static final Logger log = LoggerFactory.getLogger(RealizedModeGraphTest.class);
-
 
     @BeforeClass
     public static void setUpCRC() {
@@ -24,7 +22,6 @@ public class RealizedModeGraphTest {
 
     @Test
     public void testShouldPassShouldReturnModeChoseEventOccurrenceForCRCUnitHour() {
-        System.out.println("-----------------------------");
 
         int expectedWalkResult = 2;
         int expectedCarResult = 2;
@@ -38,10 +35,10 @@ public class RealizedModeGraphTest {
         int actaulRideHailResult = data.get(hour).get(GraphTestRealizedUtil.RIDE_HAIL);
         int actaulOtherResult = data.get(hour).get(GraphTestRealizedUtil.OTHERS);
 
-        log.debug("actual walk test 1-  "+actaulWalkResult);
-        log.debug("actual car test 1-  " + actaulCarResult);
-        log.debug("actual ride_hail test 1- " + actaulRideHailResult);
-        log.debug("actal others test 1- " + actaulOtherResult);
+        System.out.println(("actual walk test 1-  "+actaulWalkResult));
+        System.out.println("actual car test 1-  " + actaulCarResult);
+        System.out.println("actual ride_hail test 1- " + actaulRideHailResult);
+        System.out.println("actal others test 1- " + actaulOtherResult);
 
         assertEquals(expectedWalkResult,actaulWalkResult );
         assertEquals(expectedCarResult,actaulCarResult );
@@ -65,10 +62,10 @@ public class RealizedModeGraphTest {
         int actaulRideHailResult = data1.get(hour).get(GraphTestRealizedUtil.RIDE_HAIL);
         int actaulOtherResult = data1.get(hour).get(GraphTestRealizedUtil.OTHERS);
 
-        log.debug("actual walk test 2- "+actaulWalkResult);
-        log.debug("actual car test 2- " + actaulCarResult);
-        log.debug("actual ride_hail test 2- " + actaulRideHailResult);
-        log.debug("actal others test 2- " + actaulOtherResult);
+        System.out.println("actual walk test 2- "+actaulWalkResult);
+        System.out.println("actual car test 2- " + actaulCarResult);
+        System.out.println("actual ride_hail test 2- " + actaulRideHailResult);
+        System.out.println("actal others test 2- " + actaulOtherResult);
 
         assertEquals(expectedWalkResult,actaulWalkResult );
         assertEquals(expectedCarResult,actaulCarResult );
@@ -92,10 +89,10 @@ public class RealizedModeGraphTest {
         int actaulRideHailResult = data2.get(hour).get(GraphTestRealizedUtil.RIDE_HAIL);
         int actaulOtherResult = data2.get(hour).get(GraphTestRealizedUtil.OTHERS);
 
-        log.debug("actual walk test 3- "+actaulWalkResult);
-        log.debug("actual car test 3-  " + actaulCarResult);
-        log.debug("actual ride_hail test 3- " + actaulRideHailResult);
-        log.debug("actal others test 3- " + actaulOtherResult);
+        System.out.println("actual walk test 3- "+actaulWalkResult);
+        System.out.println("actual car test 3-  " + actaulCarResult);
+        System.out.println("actual ride_hail test 3- " + actaulRideHailResult);
+        System.out.println("actal others test 3- " + actaulOtherResult);
         assertEquals(expectedWalkResult,actaulWalkResult );
         assertEquals(expectedCarResult,actaulCarResult );
         assertEquals(expectedRideHailResult,actaulRideHailResult );
@@ -117,10 +114,10 @@ public class RealizedModeGraphTest {
         int actaulOtherResult = data3.get(9).get(GraphTestRealizedUtil.OTHERS);
         int actaulWalkResult = data3.get(10).get(GraphTestRealizedUtil.WALK);
 
-        log.debug("actual walk test 4- "+actaulWalkResult);
-        log.debug("actual car test 4-  " + actaulCarResult);
-        log.debug("actual ride_hail test 4- " + actaulRideHailResult);
-        log.debug("actal others test 4-  " + actaulOtherResult);
+        System.out.println("actual walk test 4- "+actaulWalkResult);
+        System.out.println("actual car test 4-  " + actaulCarResult);
+        System.out.println("actual ride_hail test 4- " + actaulRideHailResult);
+        System.out.println("actal others test 4-  " + actaulOtherResult);
 
         assertEquals(expectedWalkResult,actaulWalkResult );
         assertEquals(expectedCarResult,actaulCarResult );
@@ -143,11 +140,10 @@ public class RealizedModeGraphTest {
         int actaulOtherResult = data3.get(12).get(GraphTestRealizedUtil.OTHERS);
         int actaulWalkResult = data3.get(12).get(GraphTestRealizedUtil.WALK);
 
-        log.debug("actual walk test 5- "+actaulWalkResult);
-        log.debug("actual car test 5-  " + actaulCarResult);
-        log.debug("actual ride_hail test 5- " + actaulRideHailResult);
-        log.debug("actal others test 5- " + actaulOtherResult);
-        log.debug("actual other " + actaulOtherResult);
+        System.out.println("actual walk test 5- "+actaulWalkResult);
+        System.out.println("actual car test 5-  " + actaulCarResult);
+        System.out.println("actual ride_hail test 5- " + actaulRideHailResult);
+        System.out.println("actal others test 5- " + actaulOtherResult);
 
         assertEquals(expectedWalkResult, actaulWalkResult);
         assertEquals(expectedCarResult, actaulCarResult);
