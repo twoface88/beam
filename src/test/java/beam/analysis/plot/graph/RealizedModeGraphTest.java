@@ -109,6 +109,8 @@ public class RealizedModeGraphTest {
         int expectedOtherResult = 4;
 
         Map<Integer, Map<String,Integer>> data3 = realizedModeStats.getHoursDataCountOccurrenceAgainstMode( );
+
+        System.out.println("mode person " + realizedModeStats.getPersonMode());
         int actaulCarResult = data3.get(9).get(GraphTestRealizedUtil.CAR);
         int actaulRideHailResult = data3.get(9).get(GraphTestRealizedUtil.RIDE_HAIL);
         int actaulOtherResult = data3.get(9).get(GraphTestRealizedUtil.OTHERS);
