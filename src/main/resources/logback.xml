@@ -20,7 +20,7 @@
         <appender-ref ref="STDOUT"/>
     </logger>
 
-    <logger name="org.matsim" level="error"
+    <logger name="org.matsim" level="debug"
             additivity="false">
         <appender-ref ref="STDOUT"/>
     </logger>
