@@ -11,7 +11,7 @@
         </layout>
     </appender>
 
-    <root level="INFO">
+    <root level="debug">
         <appender-ref ref="STDOUT"/>
     </root>
 
@@ -20,8 +20,8 @@
         <appender-ref ref="STDOUT"/>
     </logger>
 
-    <logger name="org.matsim" level="debug"
-            additivity="false">
+    <logger name="org.matsim" level="error"
+            additivity="true">
         <appender-ref ref="STDOUT"/>
     </logger>
 
@@ -84,5 +84,30 @@
     <Logger name="org.matsim.core.controler.corelisteners.DumpDataAtEndImpl" level="OFF">
         <appender-ref ref="STDOUT"/>
     </Logger>
+
+    <Logger name="beam.router.r5" level="error">
+        <appender-ref ref="STDOUT"/>
+    </Logger>
+
+    <Logger name="beam.agentsim.scheduler.BeamAgentScheduler" level="info"
+        additivity="false">
+        <appender-ref ref="STDOUT"/>
+    </Logger>
+
+    <Logger name="beam.sim.BeamMobsim" level="error">
+        <appender-ref ref="STDOUT"/>
+    </Logger>
+    <Logger name="beam.agentsim.agents.household" level="error">
+        <appender-ref ref="STDOUT"/>
+    </Logger>
+
+    <Logger name="beam.router.BeamRouter" level="error">
+        <appender-ref ref="STDOUT"/>
+    </Logger>
+
+    <Logger name="beam.agentsim.agents.Population" level="error">
+        <appender-ref ref="STDOUT"/>
+    </Logger>
+
 
 </configuration>
