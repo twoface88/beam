@@ -525,16 +525,16 @@ object BeamConfig {
     }
 
     case class Calibration(
-      meanToCountsWeightRatio : scala.Double,
-      objectiveFunction       : java.lang.String
+      objectiveFunction: java.lang.String
     )
 
     object Calibration {
 
       def apply(c: com.typesafe.config.Config): BeamConfig.Beam.Calibration = {
         BeamConfig.Beam.Calibration(
-          meanToCountsWeightRatio = if(c.hasPathOrNull("meanToCountsWeightRatio")) c.getDouble("meanToCountsWeightRatio") else 0.5,
-          objectiveFunction       = if(c.hasPathOrNull("objectiveFunction")) c.getString("objectiveFunction") else "ModeChoiceObjectiveFunction"
+          objectiveFunction =
+            if (c.hasPathOrNull("objectiveFunction")) c.getString("objectiveFunction")
+            else "ModeChoiceObjectiveFunction"
         )
       }
     }

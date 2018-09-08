@@ -46,7 +46,7 @@ class EVFleetAllocationManager(val rideHailManager: RideHailManager)
         // go with nearest ETA
         findNearestByETAConsideringRange(
           vehicleAllocationRequest.request,
-          requestToExcludedDrivers.get(reqId).getOrElse(Set())
+          requestToExcludedDrivers.get(reqId).get
         )
       case _ =>
         agentLocationOpt
@@ -65,11 +65,11 @@ class EVFleetAllocationManager(val rideHailManager: RideHailManager)
               .sum) {
           requestToExcludedDrivers.put(
             reqId,
-            requestToExcludedDrivers.get(reqId).getOrElse(Set()) + agentLocation.vehicleId
+            requestToExcludedDrivers.get(reqId).get + agentLocation.vehicleId
           )
           findNearestByETAConsideringRange(
             vehicleAllocationRequest.request,
-            requestToExcludedDrivers.get(reqId).getOrElse(Set())
+            requestToExcludedDrivers.get(reqId).get
           ) match {
             case Some(newAgentLoc) =>
               makeRouteRequest(vehicleAllocationRequest.request, newAgentLoc)
