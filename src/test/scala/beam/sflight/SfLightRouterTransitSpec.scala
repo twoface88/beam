@@ -19,6 +19,7 @@ import org.scalatest._
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
+@Ignore
 class SfLightRouterTransitSpec extends AbstractSfLightSpec with Inside {
   override def beforeAll: Unit = {
     super.beforeAll
