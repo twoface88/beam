@@ -142,7 +142,7 @@ trait DrivesVehicle[T <: DrivingData] extends BeamAgent[T] with HasServices with
                 new VehicleLeavesTrafficEvent(
                   tick,
                   id.asInstanceOf[Id[Person]],
-                  null,
+                  Id.createLinkId(currentLeg.travelPath.linkIds.lastOption.getOrElse(Int.MinValue).toString),
                   data.currentVehicle.head,
                   "car",
                   0.0
@@ -152,7 +152,7 @@ trait DrivesVehicle[T <: DrivingData] extends BeamAgent[T] with HasServices with
                 new PathTraversalEvent(
                   tick,
                   currentVehicleUnderControl,
-                  beamServices.vehicles(currentVehicleUnderControl).getType,
+                  beamServices.vehicles(currentVehicleUnderControl).beamVehicleType,
                   data.passengerSchedule.schedule(currentLeg).riders.size,
                   currentLeg,
                   fuelConsumed,
@@ -326,7 +326,7 @@ trait DrivesVehicle[T <: DrivingData] extends BeamAgent[T] with HasServices with
                 new PathTraversalEvent(
                   stopTick,
                   currentVehicleUnderControl,
-                  beamServices.vehicles(currentVehicleUnderControl).getType,
+                  beamServices.vehicles(currentVehicleUnderControl).beamVehicleType,
                   data.passengerSchedule.schedule(currentLeg).riders.size,
                   updatedBeamLeg,
                   fuelConsumed,
@@ -400,7 +400,7 @@ trait DrivesVehicle[T <: DrivingData] extends BeamAgent[T] with HasServices with
           new VehicleEntersTrafficEvent(
             tick,
             Id.createPersonId(id),
-            null,
+            Id.createLinkId(newLeg.travelPath.linkIds.headOption.getOrElse(Int.MinValue).toString),
             data.currentVehicle.head,
             "car",
             1.0
@@ -416,11 +416,11 @@ trait DrivesVehicle[T <: DrivingData] extends BeamAgent[T] with HasServices with
           val edge = transportNetwork.streetLayer.edgeStore.getCursor(linkId)
           (edge.getLengthM / edge.calculateSpeed(
             new ProfileRequest,
-            StreetMode.valueOf(beamLeg.mode.r5Mode.get.left.get.toString)
+            StreetMode.valueOf(beamLeg.mode.r5Mode.get.left.getOrElse(StreetMode.CAR).toString)
           )).toLong
         }
         RoutingModel
-          .traverseStreetLeg(beamLeg, data.currentVehicle.head,travelTime)
+          .traverseStreetLeg(beamLeg, data.currentVehicle.head, travelTime)
           .foreach(eventsManager.processEvent)
         val endTime = tick + beamLeg.duration
         goto(Driving) using LiterallyDrivingData(data, endTime)
@@ -600,7 +600,7 @@ trait DrivesVehicle[T <: DrivingData] extends BeamAgent[T] with HasServices with
       stay()
 
     case Event(StopDrivingIfNoPassengerOnBoard(tick, requestId), data) =>
-      println(s"DrivesVehicle.StopDrivingIfNoPassengerOnBoard -> unhandled + ${stateName}")
+      println(s"DrivesVehicle.StopDrivingIfNoPassengerOnBoard -> unhandled + $stateName")
 
       handleStopDrivingIfNoPassengerOnBoard(tick, requestId, data)
     //stay()
@@ -612,8 +612,8 @@ trait DrivesVehicle[T <: DrivingData] extends BeamAgent[T] with HasServices with
     req: ReservationRequest,
     vehicle: BeamVehicle
   ) = {
-    val vehicleCap = vehicle.getType.getCapacity
-    val fullCap = vehicleCap.getSeats + vehicleCap.getStandingRoom
+//    val vehicleCap = vehicle.getType
+    val fullCap = vehicle.beamVehicleType.seatingCapacity + vehicle.beamVehicleType.standingRoomCapacity
     passengerSchedule.schedule.from(req.departFrom).to(req.arriveAt).forall { entry =>
       entry._2.riders.size < fullCap
     }
