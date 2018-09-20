@@ -143,7 +143,7 @@ class BeamSim @Inject()(
       transportNetwork
     )
 
-    trafficFlowStatsLogger = new TrafficFlowStatsLogger(eventsManager, scenario.getNetwork);
+    trafficFlowStatsLogger = new TrafficFlowStatsLogger(eventsManager, scenario.getNetwork, false);
 
     // report inconsistencies in output:
     //new RideHailDebugEventHandler(eventsManager)
@@ -153,7 +153,8 @@ class BeamSim @Inject()(
     if (beamServices.beamConfig.beam.debug.debugEnabled)
       logger.info(DebugLib.gcAndGetMemoryLogMessage("notifyIterationEnds.start (after GC): "))
 
-    trafficFlowStatsLogger.logStats(s"agentSim iteration ${event.getIteration} ended:");
+    trafficFlowStatsLogger.logStats(s"AgentSim iteration ${event.getIteration} ended:");
+    trafficFlowStatsLogger.reset(event.getIteration)
 
     val outputGraphsFuture = Future {
       modalityStyleStats.processData(scenario.getPopulation, event)

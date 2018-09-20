@@ -116,7 +116,7 @@ public class AgentSimToPhysSimPlanConverter implements BasicEventHandler, Metric
         jdeqsimEvents.addHandler(travelTimeCalculator);
         jdeqsimEvents.addHandler(new JDEQSimMemoryFootprint(beamConfig.beam().debug().debugEnabled()));
 
-        TrafficFlowStatsLogger trafficFlowStatsLogger = new TrafficFlowStatsLogger(jdeqsimEvents,jdeqSimScenario.getNetwork());
+        TrafficFlowStatsLogger trafficFlowStatsLogger = new TrafficFlowStatsLogger(jdeqsimEvents,jdeqSimScenario.getNetwork(),true);
 
         if (beamConfig.beam().physsim().writeMATSimNetwork()) {
             createNetworkFile(jdeqSimScenario.getNetwork());
@@ -190,7 +190,7 @@ public class AgentSimToPhysSimPlanConverter implements BasicEventHandler, Metric
         jdeqSimScenario.setPopulation(null);
 
 
-      //  trafficFlowStatsLogger.logStats("jdeqsim iteration ending:");
+        trafficFlowStatsLogger.logStats("JDEQSim iteration ending:");
 
         router.tell(new BeamRouter.UpdateTravelTime(travelTimeCalculator.getLinkTravelTimes()), ActorRef.noSender());
     }

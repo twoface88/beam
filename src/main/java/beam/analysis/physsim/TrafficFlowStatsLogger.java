@@ -14,27 +14,31 @@ import org.matsim.core.events.handler.BasicEventHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
+import java.util.*;
 
 public class TrafficFlowStatsLogger implements LinkEnterEventHandler, LinkLeaveEventHandler, VehicleEntersTrafficEventHandler, VehicleLeavesTrafficEventHandler, BasicEventHandler{
     private final Network network;
     private Logger log = LoggerFactory.getLogger(TrafficFlowStatsLogger.class);
-    HashMap<String, Double> linkEnterTime=new HashMap<>();
-    HashMap<String, Id<Link>> vehicleEnteredLink=new HashMap<>();
+    HashMap<String, Double> linkEnterTime;
+    HashMap<String, Id<Link>> vehicleEnteredLink;
 
-    double totalTravelTime=0;
-    double numberOfLinksTravelled=0;
-    double totalDistanceTravelled=0;
+    double totalTravelTime;
+    double numberOfLinksTravelled;
+    double totalDistanceTravelled;
 
-    HashSet<Id<Link>> linkUsed=new HashSet<Id<Link>>();
-    HashSet<String> vehiclesTravelled=new HashSet<String>();
+    HashSet<Id<Link>> linkUsed;
+    HashSet<String> vehiclesTravelled;
+    private boolean isPhysSim;
 
-    public TrafficFlowStatsLogger(EventsManager eventsManager, Network network){
+    public TrafficFlowStatsLogger(EventsManager eventsManager, Network network, boolean isPhysSim){
+        this.isPhysSim = isPhysSim;
         eventsManager.addHandler(this);
         this.network=network;
+        reset(0);
     }
+
+
+
 
     @Override
     public void handleEvent(VehicleEntersTrafficEvent event) {
@@ -47,9 +51,11 @@ public class TrafficFlowStatsLogger implements LinkEnterEventHandler, LinkLeaveE
     }
 
     private void enterLink(Id<Link> linkId, String vehicleId, double linkEnterTime){
-        this.linkEnterTime.put(vehicleId,linkEnterTime);
-        vehicleEnteredLink.put(vehicleId,linkId);
-        update(linkId,vehicleId);
+        if (isRelevantVehicle(vehicleId)) {
+            this.linkEnterTime.put(vehicleId, linkEnterTime);
+            vehicleEnteredLink.put(vehicleId, linkId);
+            update(linkId, vehicleId);
+        }
     }
 
     @Override
@@ -63,13 +69,16 @@ public class TrafficFlowStatsLogger implements LinkEnterEventHandler, LinkLeaveE
     }
 
     private void leaveLink(Id<Link> linkId,String vehicleId,double leaveTime){
-        totalTravelTime+=leaveTime-linkEnterTime.get(vehicleId);
-        linkEnterTime.remove(vehicleId);
-        numberOfLinksTravelled++;
+        if (isRelevantVehicle(vehicleId) && linkEnterTime.containsKey(vehicleId)) { // e.g. vehicle might leave immediatly if destination on same link
+            totalTravelTime += leaveTime - linkEnterTime.get(vehicleId);
+            linkEnterTime.remove(vehicleId);
+            numberOfLinksTravelled++;
+            update(linkId,vehicleId);
+        }
     }
 
     public void update(Id<Link> linkId,String vehicleId){
-        linkUsed.add(linkId);
+        if (linkId!=null) linkUsed.add(linkId);
         vehiclesTravelled.add(vehicleId);
     }
 
@@ -77,9 +86,23 @@ public class TrafficFlowStatsLogger implements LinkEnterEventHandler, LinkLeaveE
         log.info(debugTag);
         log.info("total car travel time (sec):" + totalTravelTime);
         log.info("number of links travelled:" + numberOfLinksTravelled);
-        log.info("used links:" + linkUsed.size());
+        log.info("links touched:" + linkUsed.size());
         log.info("vehicles on road network:" + vehiclesTravelled.size());
+
+        List list=new LinkedList(linkUsed);
+        Collections.sort(list);
+        log.info("links" + list);
+
+
+        log.info("==============================");
     }
+
+    private boolean isRelevantVehicle(String vehicleId){
+        return isPhysSim || vehicleId.contains("rideHail") || vehicleId.contains("bus") || isPersonalCar(vehicleId);
+    }
+
+
+
 
 
     @Override
@@ -88,5 +111,24 @@ public class TrafficFlowStatsLogger implements LinkEnterEventHandler, LinkLeaveE
             DebugLib.emptyFunctionForSettingBreakPoint();
         }
     }
+
+
+
+
+    public static boolean isPersonalCar(String vehicleId) {
+        return vehicleId.replaceAll("-","").matches("[0-9]+");
+    }
+
+    @Override
+    public void reset(int iteration) {
+        linkEnterTime=new HashMap<>();
+        vehicleEnteredLink=new HashMap<>();
+        totalTravelTime=0;
+        numberOfLinksTravelled=0;
+        totalDistanceTravelled=0;
+        linkUsed=new HashSet<Id<Link>>();
+        vehiclesTravelled=new HashSet<String>();
+    }
+
 
 }
