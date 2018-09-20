@@ -69,12 +69,15 @@ public class TrafficFlowStatsLogger implements LinkEnterEventHandler, LinkLeaveE
     }
 
     private void leaveLink(Id<Link> linkId,String vehicleId,double leaveTime){
-        if (isRelevantVehicle(vehicleId) && linkEnterTime.containsKey(vehicleId)) { // e.g. vehicle might leave immediatly if destination on same link
-            totalTravelTime += leaveTime - linkEnterTime.get(vehicleId);
-            linkEnterTime.remove(vehicleId);
-            numberOfLinksTravelled++;
+        if (isRelevantVehicle(vehicleId) ) {
+            if (linkEnterTime.containsKey(vehicleId)){ // e.g. vehicle might leave immediatly if destination on same link
+                totalTravelTime += leaveTime - linkEnterTime.get(vehicleId);
+                linkEnterTime.remove(vehicleId);
+                numberOfLinksTravelled++;
+            }
             update(linkId,vehicleId);
         }
+
     }
 
     public void update(Id<Link> linkId,String vehicleId){
