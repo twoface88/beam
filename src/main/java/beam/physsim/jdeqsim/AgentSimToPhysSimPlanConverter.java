@@ -4,6 +4,7 @@ import akka.actor.ActorRef;
 import beam.agentsim.events.PathTraversalEvent;
 import beam.analysis.physsim.PhyssimCalcLinkSpeedStats;
 import beam.analysis.physsim.PhyssimCalcLinkStats;
+import beam.analysis.physsim.TrafficFlowStatsLogger;
 import beam.analysis.via.EventWriterXML_viaCompatible;
 import beam.calibration.impl.example.CountsObjectiveFunction;
 import beam.calibration.impl.example.ModeChoiceObjectiveFunction;
@@ -115,6 +116,8 @@ public class AgentSimToPhysSimPlanConverter implements BasicEventHandler, Metric
         jdeqsimEvents.addHandler(travelTimeCalculator);
         jdeqsimEvents.addHandler(new JDEQSimMemoryFootprint(beamConfig.beam().debug().debugEnabled()));
 
+        TrafficFlowStatsLogger trafficFlowStatsLogger = new TrafficFlowStatsLogger(jdeqsimEvents,jdeqSimScenario.getNetwork());
+
         if (beamConfig.beam().physsim().writeMATSimNetwork()) {
             createNetworkFile(jdeqSimScenario.getNetwork());
         }
@@ -185,6 +188,9 @@ public class AgentSimToPhysSimPlanConverter implements BasicEventHandler, Metric
         Message.setEventsManager(null);
         jdeqSimScenario.setNetwork(null);
         jdeqSimScenario.setPopulation(null);
+
+
+      //  trafficFlowStatsLogger.logStats("jdeqsim iteration ending:");
 
         router.tell(new BeamRouter.UpdateTravelTime(travelTimeCalculator.getLinkTravelTimes()), ActorRef.noSender());
     }

@@ -8,6 +8,7 @@ import akka.pattern.ask
 import akka.util.Timeout
 import beam.agentsim.agents.modalbehaviors.ModeChoiceCalculator
 import beam.agentsim.agents.ridehail.{RideHailIterationHistoryActor, TNCIterationsStatsCollector}
+import beam.analysis.physsim.TrafficFlowStatsLogger
 import beam.analysis.plots.GraphsStatsAgentSimEventsListener
 import beam.analysis.plots.modality.ModalityStyleStats
 import beam.analysis.via.ExpectedMaxUtilityHeatMap
@@ -51,6 +52,8 @@ class BeamSim @Inject()(
   private var modalityStyleStats: ModalityStyleStats = _
   private var expectedDisutilityHeatMapDataCollector: ExpectedMaxUtilityHeatMap = _
   private var rideHailIterationHistoryActor: ActorRef = _
+
+  private var trafficFlowStatsLogger: TrafficFlowStatsLogger = _
 
   private var tncIterationsStatsCollector: TNCIterationsStatsCollector = _
   val rideHailIterationHistoryActorName = "rideHailIterationHistoryActor"
@@ -140,6 +143,8 @@ class BeamSim @Inject()(
       transportNetwork
     )
 
+    trafficFlowStatsLogger = new TrafficFlowStatsLogger(eventsManager, scenario.getNetwork);
+
     // report inconsistencies in output:
     //new RideHailDebugEventHandler(eventsManager)
   }
@@ -147,6 +152,8 @@ class BeamSim @Inject()(
   override def notifyIterationEnds(event: IterationEndsEvent): Unit = {
     if (beamServices.beamConfig.beam.debug.debugEnabled)
       logger.info(DebugLib.gcAndGetMemoryLogMessage("notifyIterationEnds.start (after GC): "))
+
+    trafficFlowStatsLogger.logStats(s"agentSim iteration ${event.getIteration} ended:");
 
     val outputGraphsFuture = Future {
       modalityStyleStats.processData(scenario.getPopulation, event)
