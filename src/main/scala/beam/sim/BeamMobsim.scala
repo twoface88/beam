@@ -196,12 +196,6 @@ class BeamMobsim @Inject()(
         private val numRideHailAgents = math.round(
           scenario.getPopulation.getPersons.size * beamServices.beamConfig.beam.agentsim.agents.rideHail.numDriversAsFractionOfPopulation
         )
-        private val rideHailVehicleType = BeamVehicleUtils
-          .getVehicleTypeById(
-            beamServices.beamConfig.beam.agentsim.agents.rideHail.vehicleTypeId,
-            scenario.getVehicles.getVehicleTypes
-          )
-          .getOrElse(scenario.getVehicles.getVehicleTypes.get(Id.create("1", classOf[VehicleType])))
 
         val quadTreeBounds: QuadTreeBounds = getQuadTreeBound(
           scenario.getPopulation.getPersons
@@ -289,9 +283,12 @@ class BeamMobsim @Inject()(
             val rideHailVehicleId = BeamVehicle.createId(person.getId, Some("rideHailVehicle"))
             //                Id.createVehicleId(s"rideHailVehicle-${person.getId}")
 
-            val ridehailBeamVehicleTypeId = Id.create("RIDEHAIL-TYPE-DEFAULT", classOf[BeamVehicleType])
-            val ridehailBeamVehicleType = beamServices.vehicleTypes
-              .get(ridehailBeamVehicleTypeId)
+            val defaultRidehailBeamVehicleTypeId = Id.create("RIDEHAIL-TYPE-DEFAULT", classOf[BeamVehicleType])
+            val configRidehailBeamVehicleTypeId = Id.create(beamServices.beamConfig.beam.agentsim.agents.rideHail.vehicleTypeId, classOf[BeamVehicleType])
+
+            val ridehailBeamVehicleType = beamServices.vehicleTypes.find{ case (id, _) =>
+              id.equals(configRidehailBeamVehicleTypeId) || id.equals(defaultRidehailBeamVehicleTypeId)
+            }.map(_._2)
               .getOrElse(BeamVehicleType.defaultRidehailBeamVehicleType)
 
             val rideHailAgentPersonId: Id[RideHailAgent] =
@@ -301,12 +298,14 @@ class BeamMobsim @Inject()(
               .map(new Powertrain(_))
               .getOrElse(Powertrain.PowertrainFromMilesPerGallon(Powertrain.AverageMilesPerGallon))
 
+            val fuelCapacityInJoules = beamServices.beamConfig.beam.agentsim.agents.rideHail.vehicleRangeInMeters * powertrain.estimateConsumptionInJoules(1)
+
             val rideHailBeamVehicle = new BeamVehicle(
               rideHailVehicleId,
               powertrain,
               None,
               ridehailBeamVehicleType,
-              Some(1.0),
+              Option(fuelCapacityInJoules),
               None
             )
             beamServices.vehicles += (rideHailVehicleId -> rideHailBeamVehicle)
