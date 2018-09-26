@@ -43,6 +43,8 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
+import java.util.function.Function;
 
 
 /**
@@ -106,7 +108,7 @@ public class AgentSimToPhysSimPlanConverter implements BasicEventHandler, Metric
 
     }
 
-    public void setupActorsAndRunPhysSim(int iterationNumber) {
+    public CompletableFuture<Void> setupActorsAndRunPhysSim(int iterationNumber) {
         MutableScenario jdeqSimScenario = (MutableScenario) ScenarioUtils.createScenario(agentSimScenario.getConfig());
         jdeqSimScenario.setNetwork(agentSimScenario.getNetwork());
         jdeqSimScenario.setPopulation(jdeqsimPopulation);
@@ -168,12 +170,12 @@ public class AgentSimToPhysSimPlanConverter implements BasicEventHandler, Metric
 
         }
 
-        CompletableFuture.runAsync(() -> {
+        CompletableFuture<Void> notifyFuture = CompletableFuture.runAsync(() -> {
             linkStatsGraph.notifyIterationEnds(iterationNumber, travelTimeCalculator);
             linkStatsGraph.clean();
         });
 
-        CompletableFuture.runAsync(() -> {
+        CompletableFuture<Void> endFuture = CompletableFuture.runAsync(() -> {
             linkSpeedStatsGraph.notifyIterationEnds(iterationNumber, travelTimeCalculator);
         });
 
@@ -186,7 +188,10 @@ public class AgentSimToPhysSimPlanConverter implements BasicEventHandler, Metric
         jdeqSimScenario.setNetwork(null);
         jdeqSimScenario.setPopulation(null);
 
-        router.tell(new BeamRouter.UpdateTravelTime(travelTimeCalculator.getLinkTravelTimes()), ActorRef.noSender());
+        return CompletableFuture.allOf(notifyFuture, endFuture).thenApply(aVoid -> {
+            router.tell(new BeamRouter.UpdateTravelTime(travelTimeCalculator.getLinkTravelTimes()), ActorRef.noSender());
+            return aVoid;
+        });
     }
 
     private boolean writePhysSimEvents(int iterationNumber) {
@@ -307,7 +312,7 @@ public class AgentSimToPhysSimPlanConverter implements BasicEventHandler, Metric
         return leg;
     }
 
-    public void startPhysSim(IterationEndsEvent iterationEndsEvent) {
+    public CompletableFuture<Void> startPhysSim(IterationEndsEvent iterationEndsEvent) {
         //
         createLastActivityOfDayForPopulation();
         writePhyssimPlans(iterationEndsEvent);
@@ -315,9 +320,11 @@ public class AgentSimToPhysSimPlanConverter implements BasicEventHandler, Metric
             log.error("number of links removed from route because they are not in the matsim network:" + numberOfLinksRemovedFromRouteAsNonCarModeLinks);
         }
         long start = System.currentTimeMillis();
-        setupActorsAndRunPhysSim(iterationEndsEvent.getIteration());
-        log.info("PhysSim for iteration {} took {} ms", iterationEndsEvent.getIteration(), System.currentTimeMillis() - start);
-        preparePhysSimForNewIteration();
+        return setupActorsAndRunPhysSim(iterationEndsEvent.getIteration()).thenApply(a -> {
+            log.info("PhysSim for iteration {} took {} ms", iterationEndsEvent.getIteration(), System.currentTimeMillis() - start);
+            preparePhysSimForNewIteration();
+            return a;
+        });
     }
 
     private void createLastActivityOfDayForPopulation() {

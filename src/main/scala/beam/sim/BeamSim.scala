@@ -1,7 +1,9 @@
 package beam.sim
 
 import java.nio.file.{Files, Paths}
+import java.util.Optional
 import java.util.concurrent.TimeUnit
+import java.util.function.BiConsumer
 
 import akka.actor.{ActorRef, ActorSystem, Identify}
 import akka.pattern.ask
@@ -30,7 +32,7 @@ import org.matsim.vehicles.VehicleCapacity
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Await, Future, Promise}
 
 class BeamSim @Inject()(
   private val actorSystem: ActorSystem,
@@ -166,12 +168,16 @@ class BeamSim @Inject()(
     if (beamServices.beamConfig.beam.physsim.skipPhysSim) {
       Await.result(Future.sequence(List(outputGraphsFuture)), Duration.Inf)
     } else {
-      val physsimFuture = Future {
-        agentSimToPhysSimPlanConverter.startPhysSim(event)
-      }
+
+      val physsimFuture = Promise[Unit]()
+      agentSimToPhysSimPlanConverter
+        .startPhysSim(event)
+        .whenComplete(
+          (t: Void, u: Throwable) => Option(u).fold(physsimFuture.success(t))(e => physsimFuture.failure(e))
+        )
 
       // executing code blocks parallel
-      Await.result(Future.sequence(List(outputGraphsFuture, physsimFuture)), Duration.Inf)
+      Await.result(Future.sequence(List(outputGraphsFuture, physsimFuture.future)), Duration.Inf)
     }
 
     if (beamServices.beamConfig.beam.debug.debugEnabled)
