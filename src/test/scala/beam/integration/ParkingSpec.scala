@@ -2,34 +2,15 @@ package beam.integration
 
 import java.io.File
 
-import scala.collection.immutable.Queue
-import scala.collection.mutable.ArrayBuffer
-
 import beam.agentsim.events.{LeavingParkingEventAttrs, ModeChoiceEvent, ParkEventAttrs, PathTraversalEvent}
 import beam.sim.BeamHelper
 import com.typesafe.config.ConfigValueFactory
 import org.apache.commons.io.FileUtils
 import org.matsim.api.core.v01.events.Event
-import org.matsim.core.events.{EventsUtils, MatsimEventsReader}
-import org.matsim.core.events.handler.BasicEventHandler
-import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
-
-import beam.agentsim.events.{LeavingParkingEventAttrs, ModeChoiceEvent, ParkEventAttrs, PathTraversalEvent}
-import java.io.File
-
-import beam.agentsim.events.{LeavingParkingEventAttrs, ModeChoiceEvent, ParkEventAttrs, PathTraversalEvent}
-import beam.sim.BeamHelper
-import com.typesafe.config.ConfigValueFactory
-import org.apache.commons.io.FileUtils
-import org.matsim.api.core.v01.events.Event
-import org.matsim.core.events.{EventsUtils, MatsimEventsReader}
-import org.matsim.core.events.handler.BasicEventHandler
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
 import scala.collection.immutable.Queue
 import scala.collection.mutable.ArrayBuffer
-
-import beam.agentsim.events.{LeavingParkingEventAttrs, ModeChoiceEvent, ParkEventAttrs, PathTraversalEvent}
 
 class ParkingSpec
     extends WordSpecLike
@@ -129,7 +110,7 @@ class ParkingSpec
       parkingEvents.size should be > 0
     }
 
-    "departure and arrival should be from same parking 4 tuple" ignore {
+    "departure and arrival should be from same parking 4 tuple" in {
 
       val parkingEvents = defaultEvents.head.filter(
         e =>
@@ -224,19 +205,19 @@ class ParkingSpec
       }
     }
 
-    "expensive parking should reduce driving" ignore {
+    "expensive parking should reduce driving" in {
       val expensiveModeChoiceCarCount = expensiveEvents.map(filterForCarMode)
       val defaultModeChoiceCarCount = defaultEvents.map(filterForCarMode)
 
-      println(s"Default iterations $defaultModeChoiceCarCount")
-      println(s"Expensive iterations $expensiveModeChoiceCarCount")
+//      println(s"Default iterations $defaultModeChoiceCarCount")
+//      println(s"Expensive iterations $expensiveModeChoiceCarCount")
 
       defaultModeChoiceCarCount
         .takeRight(5)
         .sum should be > expensiveModeChoiceCarCount.takeRight(5).sum
     }
 
-    "empty parking access should reduce driving" ignore {
+    "empty parking access should reduce driving" in {
       val emptyModeChoiceCarCount = emptyEvents.map(filterForCarMode)
       val defaultModeChoiceCarCount = defaultEvents.map(filterForCarMode)
 
@@ -248,12 +229,12 @@ class ParkingSpec
         .sum should be > emptyModeChoiceCarCount.takeRight(5).sum
     }
 
-    "limited parking access should reduce driving" ignore {
+    "limited parking access should reduce driving" in {
       val limitedModeChoiceCarCount = limitedEvents.map(filterForCarMode)
       val defaultModeChoiceCarCount = defaultEvents.map(filterForCarMode)
 
-      println(s"Default iterations $defaultModeChoiceCarCount")
-      println(s"Limited iterations $limitedModeChoiceCarCount")
+//      println(s"Default iterations $defaultModeChoiceCarCount")
+//      println(s"Limited iterations $limitedModeChoiceCarCount")
 
       defaultModeChoiceCarCount
         .takeRight(5)
@@ -261,7 +242,7 @@ class ParkingSpec
 
     }
 
-    "limited parking access should increase walking distances" ignore {
+    "limited parking access should increase walking distances" in {
       def filterPathTraversalForWalk(e: Event): Boolean = {
         PathTraversalEvent.EVENT_TYPE.equals(e.getEventType) &&
         "walk".equalsIgnoreCase(e.getAttributes.get(PathTraversalEvent.ATTRIBUTE_MODE))
