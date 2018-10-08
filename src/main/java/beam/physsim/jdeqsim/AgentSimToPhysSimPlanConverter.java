@@ -49,6 +49,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 
+
 /**
  * @author asif and rwaraich.
  */
@@ -180,10 +181,6 @@ public class AgentSimToPhysSimPlanConverter implements BasicEventHandler, Metric
         }));
 
         completableFutures.add(CompletableFuture.runAsync(() -> linkSpeedStatsGraph.notifyIterationEnds(iterationNumber, travelTimeCalculator)));
-
-
-        completableFutures.add(CompletableFuture.runAsync(() -> linkSpeedDistributionStatsGraph.notifyIterationEnds(iterationNumber, travelTimeCalculator)));
-
 
         if (shouldWritePhysSimEvents(iterationNumber)) {
             eventsWriterXML.closeFile();
