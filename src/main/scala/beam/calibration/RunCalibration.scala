@@ -77,6 +77,9 @@ object RunCalibration extends App with BeamHelper {
   if (runType == RUN_TYPE_LOCAL) {
     val experimentRunner: ExperimentRunner = ExperimentRunner()
     experimentRunner.runExperiment(numIters)
+
+    System.exit(0)
+
   } else if (runType == RUN_TYPE_REMOTE) {
     logger.info("Triggering the remote deployment...")
     import sys.process._
@@ -113,6 +116,7 @@ object RunCalibration extends App with BeamHelper {
     }
   } else {
     logger.error("{} unknown", RUN_TYPE)
+    System.exit(1)
   }
 
   // Aux Methods //
