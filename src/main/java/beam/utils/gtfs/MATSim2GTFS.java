@@ -54,6 +54,11 @@ import java.util.Map;
 
         }
 
+        /**
+         * [0] Feed ID (String, any)
+         * [1] Transit Schedule (String, location of transit schedule)
+         * [2] Output file
+         */
         public static void main(String[] args) {
 
             // Transformation to convert Singapore UTM coordinates to WGS84
@@ -167,44 +172,9 @@ import java.util.Map;
                 }
             }
 
-            EventsManager eventsManager = new EventsManagerImpl() ;
-
-
-//            // Now create stop_times.txt separately, from the Singapore Matsim model events output.
-//            // NB: This file must have at least the departureId field quoted, because those IDs contain commas.
-//            eventsManager.addHandler((VehicleDepartsAtFacilityEventHandler) event -> {
-//                String stopId = event.getFacilityId().toString();
-//                Double dbltime = Double.parseDouble(String.valueOf(event.getTime()));
-//                Integer time = dbltime.intValue();
-//                String vehicleId = event.getVehicleId().toString();
-//                String[] components = vehicleId.split("_");
-//                String routeId;
-//                String departureId;
-//                if(components.length==4){
-//                    routeId = components[1]+"r";
-//                    departureId = components[3];
-//                }else{
-//                    routeId = components[1];
-//                    departureId = components[2];
-//                }
-//                String tripId = routeId + '#' + departureId;
-//                StopTime gtfsStopTime = new StopTime();
-//                gtfsStopTime.trip_id = tripId;
-//                gtfsStopTime.stop_sequence = time;
-//                gtfsStopTime.stop_id = stopId;
-//                gtfsStopTime.arrival_time = time;
-//                gtfsStopTime.departure_time = time;
-//                gtfsFeed.stop_times.put(
-//                        new Fun.Tuple2(gtfsStopTime.trip_id, Integer.valueOf(gtfsStopTime.stop_sequence)),
-//                        gtfsStopTime);
-//
-//            });
-
-            new MatsimEventsReader(eventsManager).readFile(args[2]);
-
 
             // Write out to GTFS
-            gtfsFeed.toFile(args[3]);
+            gtfsFeed.toFile(args[2]);
 
         }
 
