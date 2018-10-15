@@ -1,2 +1,2 @@
 install:
-- mvn clean install -DskipTests
+- gradle install  -x test
