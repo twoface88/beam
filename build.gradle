@@ -10,12 +10,10 @@ buildscript {
     repositories {
         jcenter()
         mavenLocal()
-        maven{url 'http://download.osgeo.org/webdav/geotools/'}
         mavenCentral()
         maven { url "https://plugins.gradle.org/m2/" }
     }
     dependencies {
-        scoverage 'org.scoverage:scalac-scoverage-plugin_2.11:1.1.0', 'org.scoverage:scalac-scoverage-runtime_2.11:1.1.0'
         classpath group: 'kr.motd.gradle', name: 'sphinx-gradle-plugin', version: '1.0.3.Final'
         classpath "jp.classmethod.aws:gradle-aws-plugin:0.35"
         classpath "com.github.viswaramamoorthy:gradle-util-plugins:0.1.0-RELEASE"
@@ -26,7 +24,7 @@ buildscript {
 plugins {
     id "net.ltgt.apt" version "0.5"
     id "de.undercouch.download" version "3.2.0"
-//    id "org.scoverage" version "2.1.0"
+    id "org.scoverage" version "2.4.0"
 }
 
 //ext {
@@ -76,7 +74,7 @@ if (project.hasProperty('env')) {
 
 allprojects {
     repositories {
-        url 'http://download.osgeo.org/webdav/geotools/'
+        maven{ url 'http://download.osgeo.org/webdav/geotools/'}
         maven { url "http://maven.geotoolkit.org/" }
         maven { url "https://repository.jboss.org/nexus/content/repositories/thirdparty-releases" }
         maven { url "http://central.maven.org/maven2" }
