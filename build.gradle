@@ -8,7 +8,7 @@ import java.time.Instant
 
 buildscript {
     repositories {
-        url 'http://download.osgeo.org/webdav/geotools/'
+        maven{url 'http://download.osgeo.org/webdav/geotools/'}
         jcenter()
         mavenLocal()
         mavenCentral()
