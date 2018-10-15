@@ -1,11 +1,17 @@
 package beam.calibration.utils
 import scala.util.control.Breaks._
 
-object ParamNameShortener extends App {
+object ParamNameShortener extends App{
 
-  var abbrevToParamsMap: Map[String, String] = Map()
+  var abbrevToParamsMap: Map[String, String] = _
 
-  def shortenName(paramName: String) = {
+  def initialize = {
+    abbrevToParamsMap = Map()
+  }
+
+  def shortenName(paramName: String) : String = {
+
+    if(abbrevToParamsMap == null) initialize
 
     if(paramName.size > 100) {
       val paramParts: Array[String] = paramName.split("""\.""")
@@ -36,12 +42,19 @@ object ParamNameShortener extends App {
       }
 
       abbrevToParamsMap = abbrevToParamsMap + (finalString -> paramName)
+
+      finalString
     }else{
+
       abbrevToParamsMap = abbrevToParamsMap + (paramName -> paramName)
+
+      paramName
     }
   }
 
   def expandName(shortName: String): String ={
+
+    if(abbrevToParamsMap == null) initialize
 
     abbrevToParamsMap(shortName)
   }

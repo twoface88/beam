@@ -3,6 +3,7 @@ package beam.experiment
 import java.io._
 import java.nio.file.{Files, Path, Paths}
 
+import beam.calibration.utils.ParamNameShortener
 import com.google.common.base.Charsets
 import com.google.common.io.Resources
 import com.hubspot.jinjava.Jinjava
@@ -25,6 +26,8 @@ import scala.collection.JavaConverters._
 object ExperimentGenerator extends App {
 
   val ExperimentsParamName = "experiments"
+
+
 
   def validateExperimentConfig(experiment: ExperimentDef): Unit = {
     if (!Files.exists(Paths.get(experiment.header.beamTemplateConfPath))) {
@@ -101,6 +104,34 @@ object ExperimentGenerator extends App {
     constructor.addTypeDescription(baseScenarioDesc)
     val yaml = new Yaml(constructor)
     val experiment = yaml.loadAs(new FileInputStream(file), classOf[ExperimentDef])
+
+    shortenNames(experiment)
+    experiment
+  }
+
+  def shortenNames(experimentDef: ExperimentDef): ExperimentDef = {
+
+    val params: java.util.Map[String, Object] = new java.util.HashMap()
+
+    experiment.defaultParams.forEach {
+      case (k: String, v: Object) => {
+        if(k != null) {
+          val shortName = ParamNameShortener.shortenName(k)
+          params.put(shortName, v)
+        }
+      }
+    }
+    experiment.defaultParams = params
+
+    experiment.factors.forEach {
+      case (f: Factor) => {
+        f.levels.get(0).params
+
+
+      }
+    }
+
+
     experiment
   }
 
@@ -206,6 +237,8 @@ object ExperimentGenerator extends App {
   }
 
   val dynamicParamsPerFactor = experiment.getDynamicParamNamesPerFactor
+
+  println("dynamicParamsPerFactor " + dynamicParamsPerFactor)
 
   val experimentsCsv = new BufferedWriter(
     new FileWriter(Paths.get(getExperimentPath.toString, "experiments.csv").toFile, false)
