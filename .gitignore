@@ -37,10 +37,5 @@ beam-gui/build
 gc_*.log
 /test/input/sf-light/sf-light-calibration/experiments/
 /test/input/sf-light/sf-light-calibration-test/experiments/
-test/input/siouxfalls/*.xml 
-test/input/siouxfalls/r5/*.zip
-test/input/siouxfalls/r5/*.dat 
-test/input/siouxfalls/r5/*osm*
-test/input/siouxfalls/*.conf 
-test/input/siouxfalls/*.csv 
 /production/application-sfbay/calibration/experiments/
+!/test/input/siouxfalls/
