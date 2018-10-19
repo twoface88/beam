@@ -59,8 +59,14 @@ class ParkingSpec
         "beam.agentsim.agents.modalBehaviors.mulitnomialLogit.params.bike_intercept",
         ConfigValueFactory.fromAnyRef(0.0)
       )
-      .withValue("matsim.modules.strategy.ModuleProbability_1", ConfigValueFactory.fromAnyRef(0.3))
-      .withValue("matsim.modules.strategy.ModuleProbability_2", ConfigValueFactory.fromAnyRef(0.7))
+      .withValue("matsim.modules.strategy.ModuleProbability_1", ConfigValueFactory.fromAnyRef(0.7))
+      .withValue("matsim.modules.strategy.Module_1", ConfigValueFactory.fromAnyRef("SelectExpBeta"))
+      .withValue("matsim.modules.strategy.ModuleProbability_2", ConfigValueFactory.fromAnyRef(0.1))
+      .withValue("matsim.modules.strategy.Module_2", ConfigValueFactory.fromAnyRef("ClearRoutes"))
+      .withValue("matsim.modules.strategy.ModuleProbability_3", ConfigValueFactory.fromAnyRef(0.1))
+      .withValue("matsim.modules.strategy.Module_3", ConfigValueFactory.fromAnyRef("ClearModes"))
+      .withValue("matsim.modules.strategy.ModuleProbability_4", ConfigValueFactory.fromAnyRef(0.1))
+      .withValue("matsim.modules.strategy.Module_4", ConfigValueFactory.fromAnyRef("TimeMutator"))
       .withValue(
         "beam.agentsim.taz.parking",
         ConfigValueFactory.fromAnyRef(s"test/input/beamville/parking/taz-parking-$parkingScenario.csv")
@@ -104,13 +110,13 @@ class ParkingSpec
   }
 
   "Parking system " must {
-    "guarantee at least some parking used " ignore {
+    "guarantee at least some parking used " in {
       val parkingEvents =
         defaultEvents.head.filter(e => ParkEventAttrs.EVENT_TYPE.equals(e.getEventType))
       parkingEvents.size should be > 0
     }
 
-    "departure and arrival should be from same parking 4 tuple" ignore {
+    "departure and arrival should be from same parking 4 tuple" in {
 
       val parkingEvents = defaultEvents.head.filter(
         e =>
@@ -161,7 +167,7 @@ class ParkingSpec
       isSameArrivalAndDeparture shouldBe true
     }
 
-    "Park event should be thrown after last path traversal" ignore {
+    "Park event should be thrown after last path traversal" in {
       val parkingEvents = defaultEvents.head.filter(
         e =>
           ParkEventAttrs.EVENT_TYPE.equals(e.getEventType) || LeavingParkingEventAttrs.EVENT_TYPE
@@ -205,7 +211,7 @@ class ParkingSpec
       }
     }
 
-    "expensive parking should reduce driving" ignore {
+    "expensive parking should reduce driving" in {
       val expensiveModeChoiceCarCount = expensiveEvents.map(filterForCarMode)
       val defaultModeChoiceCarCount = defaultEvents.map(filterForCarMode)
 
@@ -217,7 +223,7 @@ class ParkingSpec
         .sum should be > expensiveModeChoiceCarCount.takeRight(5).sum
     }
 
-    "empty parking access should reduce driving" ignore {
+    "empty parking access should reduce driving" in {
       val emptyModeChoiceCarCount = emptyEvents.map(filterForCarMode)
       val defaultModeChoiceCarCount = defaultEvents.map(filterForCarMode)
 
@@ -229,7 +235,7 @@ class ParkingSpec
         .sum should be > emptyModeChoiceCarCount.takeRight(5).sum
     }
 
-    "limited parking access should reduce driving" ignore {
+    "limited parking access should reduce driving" in {
       val limitedModeChoiceCarCount = limitedEvents.map(filterForCarMode)
       val defaultModeChoiceCarCount = defaultEvents.map(filterForCarMode)
 
@@ -242,7 +248,7 @@ class ParkingSpec
 
     }
 
-    "limited parking access should increase walking distances" ignore {
+    "limited parking access should increase walking distances" in {
       def filterPathTraversalForWalk(e: Event): Boolean = {
         PathTraversalEvent.EVENT_TYPE.equals(e.getEventType) &&
         "walk".equalsIgnoreCase(e.getAttributes.get(PathTraversalEvent.ATTRIBUTE_MODE))

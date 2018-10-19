@@ -38,10 +38,10 @@ class IndexerForZonalParkingManager(resources: Map[StallAttributes, StallValues]
     }
 
     // We still have to do two look-ups by key because we don't know exact pricing model
-    allPricingModels.view
+    allPricingModels
       .map { pricingModel => find(key(pricingModel)) }
       .filter(_.isDefined)
-      .head
+      .headOption.getOrElse(None)
   }
 
   def filter(tazWithDistance: Vector[(TAZ, Double)],
@@ -64,7 +64,6 @@ class IndexerForZonalParkingManager(resources: Map[StallAttributes, StallValues]
       .filter(_.isDefined)
       .head
   }
-
 
 }
 
