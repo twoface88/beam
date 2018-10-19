@@ -61,11 +61,11 @@ class ParkingSpec
       )
       .withValue("matsim.modules.strategy.ModuleProbability_1", ConfigValueFactory.fromAnyRef(0.7))
       .withValue("matsim.modules.strategy.Module_1", ConfigValueFactory.fromAnyRef("SelectExpBeta"))
-      .withValue("matsim.modules.strategy.ModuleProbability_2", ConfigValueFactory.fromAnyRef(0.1))
+      .withValue("matsim.modules.strategy.ModuleProbability_2", ConfigValueFactory.fromAnyRef(0.0))
       .withValue("matsim.modules.strategy.Module_2", ConfigValueFactory.fromAnyRef("ClearRoutes"))
-      .withValue("matsim.modules.strategy.ModuleProbability_3", ConfigValueFactory.fromAnyRef(0.1))
+      .withValue("matsim.modules.strategy.ModuleProbability_3", ConfigValueFactory.fromAnyRef(0.3))
       .withValue("matsim.modules.strategy.Module_3", ConfigValueFactory.fromAnyRef("ClearModes"))
-      .withValue("matsim.modules.strategy.ModuleProbability_4", ConfigValueFactory.fromAnyRef(0.1))
+      .withValue("matsim.modules.strategy.ModuleProbability_4", ConfigValueFactory.fromAnyRef(0.0))
       .withValue("matsim.modules.strategy.Module_4", ConfigValueFactory.fromAnyRef("TimeMutator"))
       .withValue(
         "beam.agentsim.taz.parking",
@@ -215,6 +215,9 @@ class ParkingSpec
       val expensiveModeChoiceCarCount = expensiveEvents.map(filterForCarMode)
       val defaultModeChoiceCarCount = defaultEvents.map(filterForCarMode)
 
+      println("Default count " + defaultModeChoiceCarCount.mkString(","))
+      println("Expensive count ", expensiveModeChoiceCarCount.mkString(","))
+
       logger.debug("Default iterations {}", defaultModeChoiceCarCount)
       logger.debug("Expensive iterations {}", expensiveModeChoiceCarCount)
 
@@ -226,6 +229,9 @@ class ParkingSpec
     "empty parking access should reduce driving" in {
       val emptyModeChoiceCarCount = emptyEvents.map(filterForCarMode)
       val defaultModeChoiceCarCount = defaultEvents.map(filterForCarMode)
+
+      println("Default counts " + defaultModeChoiceCarCount.mkString(","))
+      println("Expensive counts ", emptyModeChoiceCarCount.mkString(","))
 
       logger.debug("Default iterations {}", defaultModeChoiceCarCount)
       logger.debug("Empty iterations {}", emptyModeChoiceCarCount)
@@ -239,8 +245,11 @@ class ParkingSpec
       val limitedModeChoiceCarCount = limitedEvents.map(filterForCarMode)
       val defaultModeChoiceCarCount = defaultEvents.map(filterForCarMode)
 
-      logger.debug(s"Default iterations $defaultModeChoiceCarCount")
-      logger.debug(s"Limited iterations $limitedModeChoiceCarCount")
+      println("Default count " + defaultModeChoiceCarCount.mkString(","))
+      println("Expensive count ", limitedModeChoiceCarCount.mkString(","))
+
+      logger.debug(s"Default iterations {}$defaultModeChoiceCarCount")
+      logger.debug(s"Limited iterations {}$limitedModeChoiceCarCount")
 
       defaultModeChoiceCarCount
         .takeRight(5)
