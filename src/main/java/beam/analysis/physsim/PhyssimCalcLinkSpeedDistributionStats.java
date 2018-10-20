@@ -47,7 +47,7 @@ public class PhyssimCalcLinkSpeedDistributionStats {
         // If not test mode pick up bin count from the beam configuration.
         if (isNotTestMode()) {
             Double endTime = Time.parseTime(beamConfig.matsim().modules().qsim().endTime());
-            Double noOfTimeBins = endTime / this.beamConfig.beam().physsim().linkStatsBinSize();
+            Double noOfTimeBins = endTime / this.beamConfig.beam().outputs().physsim().linkStatsBinSize();
             noOfTimeBins = Math.floor(noOfTimeBins);
             noOfBins = noOfTimeBins.intValue() + 1;
         }

@@ -122,7 +122,7 @@ public class AgentSimToPhysSimPlanConverter implements BasicEventHandler, Metric
         jdeqsimEvents.addHandler(travelTimeCalculator);
         jdeqsimEvents.addHandler(new JDEQSimMemoryFootprint(beamConfig.beam().debug().debugEnabled()));
 
-        if (beamConfig.beam().physsim().writeMATSimNetwork()) {
+        if (beamConfig.beam().outputs().physsim().writeMATSimNetwork()) {
             createNetworkFile(jdeqSimScenario.getNetwork());
         }
 
@@ -207,11 +207,11 @@ public class AgentSimToPhysSimPlanConverter implements BasicEventHandler, Metric
     }
 
     private boolean shouldWritePhysSimEvents(int iterationNumber) {
-        return shouldWriteInIteration(iterationNumber, beamConfig.beam().physsim().writeEventsInterval());
+        return shouldWriteInIteration(iterationNumber, beamConfig.beam().outputs().physsim().writeEventsInterval());
     }
 
     private boolean shouldWritePlans(int iterationNumber) {
-        return shouldWriteInIteration(iterationNumber, beamConfig.beam().physsim().writePlansInterval());
+        return shouldWriteInIteration(iterationNumber, beamConfig.beam().outputs().physsim().writePlansInterval());
     }
 
     private boolean shouldWriteInIteration(int iterationNumber, int interval) {

@@ -129,7 +129,7 @@ class BeamSim @Inject()(
       eventsManager,
       scenario.getNetwork,
       event.getServices.getControlerIO,
-      beamServices.beamConfig.beam.outputs.writeEventsInterval
+      beamServices.beamConfig.beam.outputs.agentsim.writeEventsInterval
     )
 
     rideHailIterationHistoryActor = actorSystem.actorOf(
@@ -157,7 +157,7 @@ class BeamSim @Inject()(
         modalityStyleStats.buildModalityStyleGraph()
       }
       createGraphsFromEvents.createGraphs(event)
-      val interval = beamServices.beamConfig.beam.outputs.writePlansInterval
+     val interval = beamServices.beamConfig.beam.outputs.agentsim.writePlansInterval
       if(interval>0 && event.getIteration % interval == 0) {
         PopulationWriterCSV(event.getServices.getScenario.getPopulation).write(
           event.getServices.getControlerIO

@@ -101,7 +101,7 @@ class BeamEventsLogger {
     private void createEventsWriters() {
         int iterationNumber = matsimServices.getIterationNumber();
 
-        final int writeEventsInterval = beamServices.beamConfig().beam().outputs().writeEventsInterval();
+        final int writeEventsInterval = beamServices.beamConfig().beam().outputs().agentsim().writeEventsInterval();
 
         final boolean writeThisIteration = (writeEventsInterval > 0) && (iterationNumber % writeEventsInterval == 0);
 

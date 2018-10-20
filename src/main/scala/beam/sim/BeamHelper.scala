@@ -167,7 +167,7 @@ trait BeamHelper extends LazyLogging {
           // MATSim defaults
           install(new NewControlerModule)
           install(new ScenarioByInstanceModule(scenario))
-          install(new ControlerDefaultsModule)
+          install(new BeamControlerModule)
           install(new ControlerDefaultCoreListenersModule)
 
           // Beam Inject below:
@@ -352,7 +352,7 @@ trait BeamHelper extends LazyLogging {
 
     LoggingUtil.createFileLogger(outputDirectory)
     matsimConfig.controler.setOutputDirectory(outputDirectory)
-    matsimConfig.controler().setWritePlansInterval(beamConfig.beam.outputs.writePlansInterval)
+    matsimConfig.controler().setWritePlansInterval(beamConfig.beam.outputs.agentsim.writePlansInterval)
 
     logger.info("Starting beam on branch {} at commit {}.", BashUtils.getBranch, BashUtils.getCommitHash)
     val outConf = Paths.get(outputDirectory, "beam.conf")

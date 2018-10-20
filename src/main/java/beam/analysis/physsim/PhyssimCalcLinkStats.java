@@ -65,7 +65,7 @@ public class PhyssimCalcLinkStats {
         this.beamConfig = beamConfig;
 
         if (isNotTestMode()) {
-            binSize = this.beamConfig.beam().physsim().linkStatsBinSize();
+            binSize = this.beamConfig.beam().outputs().physsim().linkStatsBinSize();
 
             String endTime = beamConfig.matsim().modules().qsim().endTime();
             Double _endTime = Time.parseTime(endTime);
@@ -98,7 +98,7 @@ public class PhyssimCalcLinkStats {
 
 
     private boolean writeLinkStats(int iterationNumber) {
-        return writeInIteration(iterationNumber, beamConfig.beam().physsim().linkStatsWriteInterval());
+        return writeInIteration(iterationNumber, beamConfig.beam().outputs().physsim().linkStatsWriteInterval());
     }
 
     private boolean writeInIteration(int iterationNumber, int interval) {
