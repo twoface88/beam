@@ -4,6 +4,7 @@ import beam.agentsim.agents.choice.logit.LatentClassChoiceModel.Mandatory
 import beam.agentsim.agents.choice.logit.{AlternativeAttributes, LatentClassChoiceModel}
 import beam.agentsim.agents.household.HouseholdActor.AttributesOfIndividual
 import beam.agentsim.events.{LeavingParkingEvent, ModeChoiceEvent, ReplanningEvent}
+import beam.router.Modes.BeamMode.CAR
 import beam.router.model.EmbodiedBeamTrip
 import beam.sim.{BeamServices, MapStringDouble}
 import javax.inject.Inject
@@ -128,6 +129,11 @@ class BeamScoringFunctionFactory @Inject()(beamServices: BeamServices) extends S
         finalScore = scoreOfBeingInClassGivenThisOutcome + leavingParkingEventScore
         finalScore = Math.max(finalScore, -100000) // keep scores no further below -100 to keep MATSim happy (doesn't like -Infinity) but knowing
         // that if changes to utility function drive the true scores below -100, this will need to be replaced with another big number.
+
+        if(finalScore < -50.0 && trips.filter(trip => trip.tripClassifier == CAR).size == 0){
+          val i = 0
+        }
+
       }
 
       override def handleActivity(activity: Activity): Unit = {}
