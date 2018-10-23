@@ -33,31 +33,31 @@ class ParkingSpec
       )
       .withValue(
         "beam.agentsim.agents.modalBehaviors.mulitnomialLogit.params.car_intercept",
-        ConfigValueFactory.fromAnyRef(1.0)
+        ConfigValueFactory.fromAnyRef(0.0)
       )
       .withValue(
         "beam.agentsim.agents.modalBehaviors.mulitnomialLogit.params.walk_transit_intercept",
-        ConfigValueFactory.fromAnyRef(0.0)
+        ConfigValueFactory.fromAnyRef(-2.0)
       )
       .withValue(
         "beam.agentsim.agents.modalBehaviors.mulitnomialLogit.params.drive_transit_intercept",
-        ConfigValueFactory.fromAnyRef(0.0)
+        ConfigValueFactory.fromAnyRef(-2.0)
       )
       .withValue(
         "beam.agentsim.agents.modalBehaviors.mulitnomialLogit.params.ride_hail_transit_intercept",
-        ConfigValueFactory.fromAnyRef(0.0)
+        ConfigValueFactory.fromAnyRef(-2.0)
       )
       .withValue(
         "beam.agentsim.agents.modalBehaviors.mulitnomialLogit.params.ride_hail_intercept",
-        ConfigValueFactory.fromAnyRef(0.0)
+        ConfigValueFactory.fromAnyRef(-3.0)
       )
       .withValue(
         "beam.agentsim.agents.modalBehaviors.mulitnomialLogit.params.walk_intercept",
-        ConfigValueFactory.fromAnyRef(-5.0)
+        ConfigValueFactory.fromAnyRef(-6.0)
       )
       .withValue(
         "beam.agentsim.agents.modalBehaviors.mulitnomialLogit.params.bike_intercept",
-        ConfigValueFactory.fromAnyRef(0.0)
+        ConfigValueFactory.fromAnyRef(-5.0)
       )
       .withValue("matsim.modules.strategy.ModuleProbability_1", ConfigValueFactory.fromAnyRef(0.7))
       .withValue("matsim.modules.strategy.Module_1", ConfigValueFactory.fromAnyRef("SelectExpBeta"))
