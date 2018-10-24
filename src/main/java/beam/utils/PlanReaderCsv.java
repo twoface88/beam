@@ -8,9 +8,8 @@ import org.matsim.core.population.PopulationUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
+import java.util.zip.GZIPInputStream;
 
 
 public class PlanReaderCsv {
@@ -19,7 +18,7 @@ public class PlanReaderCsv {
 
     public String delimiter = ",";
     public static final String path = "test/input/beamville/test-data/";
-    public static final String plansInputFileName = "plans-input.csv";
+    public static final String plansInputFileName = "plans-input.csv.gz";
     public static final String plansOutputFileName = "plans-output.xml";
 
 
@@ -45,7 +44,13 @@ public class PlanReaderCsv {
 
         Population population = PopulationUtils.createPopulation(ConfigUtils.createConfig());
 
-        BufferedReader reader = new BufferedReader(new FileReader(plansFile));
+        BufferedReader reader;
+        if(plansFile.endsWith(".gz")) {
+            GZIPInputStream gzipStream = new GZIPInputStream(new FileInputStream(plansFile));
+            reader = new BufferedReader(new InputStreamReader(gzipStream));
+        }else {
+            reader = new BufferedReader(new FileReader(plansFile));
+        }
         String line = "";
         int idx = 0;
 
