@@ -2,6 +2,9 @@ package beam.utils.plan.sampling
 
 import java.util
 
+import beam.agentsim.agents.vehicles.{BeamVehicleType, FuelType}
+import beam.sim.BeamServices.{readBeamVehicleTypeFile, readFuelTypeFile}
+import beam.utils.BeamVehicleUtils
 import beam.utils.plan.sampling.HouseholdAttrib.{HomeCoordX, HomeCoordY, HousingType}
 import beam.utils.plan.sampling.PopulationAttrib.Rank
 import beam.utils.scripts.PopulationWriterCSV
@@ -32,26 +35,27 @@ import org.matsim.vehicles.{Vehicle, VehicleUtils, VehicleWriterV1, Vehicles}
 import org.opengis.feature.simple.SimpleFeature
 import org.opengis.referencing.crs.CoordinateReferenceSystem
 
-import scala.collection.{JavaConverters, immutable}
 import scala.collection.JavaConverters._
+import scala.collection.concurrent.TrieMap
+import scala.collection.{JavaConverters, immutable}
 import scala.util.Random
 
 case class SynthHousehold(
-  householdId: Id[Household],
-  numPersons: Int,
-  vehicles: Int,
-  hhIncome: Double,
-  tract: Int,
-  coord: Coord,
-  var individuals: Array[SynthIndividual]
-) {
+                           householdId: Id[Household],
+                           numPersons: Int,
+                           vehicles: Int,
+                           hhIncome: Double,
+                           tract: Int,
+                           coord: Coord,
+                           var individuals: Array[SynthIndividual]
+                         ) {
 
   def addIndividual(individual: SynthIndividual): Unit = {
     individuals ++= Array(individual)
   }
 }
 
-case class SynthIndividual(indId: Id[Person], sex: Int, age: Int, valueOfTime: Double, income:Double)
+case class SynthIndividual(indId: Id[Person], sex: Int, age: Int, valueOfTime: Double, income: Double)
 
 class SynthHouseholdParser(geoConverter: GeoConverter) {
 
@@ -74,15 +78,15 @@ class SynthHouseholdParser(geoConverter: GeoConverter) {
         val hhIdStr = row(hhIdIdx)
         resHHMap.get(hhIdStr) match {
           case Some(hh: SynthHousehold) => hh.addIndividual(parseIndividual(row))
-          case None                     => resHHMap += (hhIdStr -> parseHousehold(row, hhIdStr))
+          case None => resHHMap += (hhIdStr -> parseHousehold(row, hhIdStr))
         }
       })
 
     resHHMap.values.toVector
   }
 
-  def parseSex(raw_sex:String):Int={
-    if(raw_sex=="M") 0 else 1
+  def parseSex(raw_sex: String): Int = {
+    if (raw_sex == "M") 0 else 1
   }
 
   def parseIndividual(row: Array[String]): SynthIndividual = {
@@ -90,7 +94,9 @@ class SynthHouseholdParser(geoConverter: GeoConverter) {
       Id.createPersonId(row(indIdIdx)),
       parseSex(row(indSexIdx)),
       row(indAgeIdx).toInt,
-      if(row.length==12) {row(indValTime).toDouble} else 18.0,
+      if (row.length == 12) {
+        row(indValTime).toDouble
+      } else 18.0,
       row(indIncomeIdx).toDouble
     )
   }
@@ -190,7 +196,7 @@ object HasXY {
 }
 
 trait GeoConverter {
-  def transform(coord: Coord) : Coord
+  def transform(coord: Coord): Coord
 }
 
 case class WGSConverter(sourceCRS: String, targetCRS: String) extends GeoConverter {
@@ -214,8 +220,8 @@ case class QuadTreeExtent(minx: Double, miny: Double, maxx: Double, maxy: Double
 class QuadTreeBuilder(wgsConverter: WGSConverter) {
 
   private def quadTreeExtentFromShapeFile(
-    features: util.Collection[SimpleFeature]
-  ): QuadTreeExtent = {
+                                           features: util.Collection[SimpleFeature]
+                                         ): QuadTreeExtent = {
     var minX: Double = Double.MaxValue
     var maxX: Double = Double.MinValue
     var minY: Double = Double.MaxValue
@@ -238,9 +244,9 @@ class QuadTreeBuilder(wgsConverter: WGSConverter) {
 
   // Returns a single geometry that is the union of all the polgyons in a shapefile
   def geometryUnionFromShapefile(
-    features: util.Collection[SimpleFeature],
-    sourceCRS: CoordinateReferenceSystem
-  ): Geometry = {
+                                  features: util.Collection[SimpleFeature],
+                                  sourceCRS: CoordinateReferenceSystem
+                                ): Geometry = {
 
     import scala.collection.JavaConverters._
     val targetCRS = CRS.decode(wgsConverter.targetCRS)
@@ -263,10 +269,10 @@ class QuadTreeBuilder(wgsConverter: WGSConverter) {
 
   // This version parses all activity locations and only keeps agents who have all activities w/ in the bounds
   def buildQuadTree[T: HasXY](
-    aoiShapeFileLoc: util.Collection[SimpleFeature],
-    sourceCRS: CoordinateReferenceSystem,
-    pop: Vector[Person]
-  ): QuadTree[T] = {
+                               aoiShapeFileLoc: util.Collection[SimpleFeature],
+                               sourceCRS: CoordinateReferenceSystem,
+                               pop: Vector[Person]
+                             ): QuadTree[T] = {
     val ev = implicitly[HasXY[T]]
 
     val qte = quadTreeExtentFromShapeFile(aoiShapeFileLoc)
@@ -310,6 +316,8 @@ object PlansSampler {
   private var planQt: Option[QuadTree[Plan]] = None
   var wgsConverter: Option[WGSConverter] = None
   val conf: Config = ConfigUtils.createConfig()
+  var vehicleTypesFile: String = _
+  var vehicleFuelTypesFile: String = _
 
   private val sc: MutableScenario = ScenarioUtils.createMutableScenario(conf)
   private val newPop: Population =
@@ -333,14 +341,15 @@ object PlansSampler {
   def init(args: Array[String]): Unit = {
     conf.plans.setInputFile(args(0))
     conf.network.setInputFile(args(2))
-    conf.vehicles.setVehiclesFile(args(4))
-    sampleNumber = args(5).toInt
+    vehicleTypesFile = args(4)
+    vehicleFuelTypesFile = args(5)
+    sampleNumber = args(6).toInt
     sc.setLocked()
     ScenarioUtils.loadScenario(sc)
     shapeFileReader.readFileAndInitialize(args(1))
-    val sourceCrs = MGC.getCRS(args(7))
+    val sourceCrs = MGC.getCRS(args(8))
 
-    wgsConverter = Some(WGSConverter(args(7), args(8)))
+    wgsConverter = Some(WGSConverter(args(8), args(9)))
     pop ++= scala.collection.JavaConverters
       .mapAsScalaMap(sc.getPopulation.getPersons)
       .values
@@ -358,7 +367,7 @@ object PlansSampler {
         .buildQuadTree(shapeFileReader.getFeatureSet, sourceCrs, pop)
     )
 
-    outDir = args(6)
+    outDir = args(7)
   }
 
   private def snapPlanActivityLocsToNearestLink(plan: Plan): Plan = {
@@ -401,10 +410,10 @@ object PlansSampler {
   }
 
   private def filterSynthHouseholds(
-    synthHouseholds: Vector[SynthHousehold],
-    aoiFeatures: util.Collection[SimpleFeature],
-    sourceCRS: CoordinateReferenceSystem
-  ): Vector[SynthHousehold] = {
+                                     synthHouseholds: Vector[SynthHousehold],
+                                     aoiFeatures: util.Collection[SimpleFeature],
+                                     sourceCRS: CoordinateReferenceSystem
+                                   ): Vector[SynthHousehold] = {
 
     val aoi: Geometry = new QuadTreeBuilder(wgsConverter.get)
       .geometryUnionFromShapefile(aoiFeatures, sourceCRS)
@@ -431,12 +440,14 @@ object PlansSampler {
   }
 
   def run(): Unit = {
+    val fuelTypes: TrieMap[Id[FuelType], FuelType] =
+      readFuelTypeFile(vehicleFuelTypesFile)
 
-    val carVehicleType =
-      JavaConverters
-        .collectionAsScalaIterable(sc.getVehicles.getVehicleTypes.values())
-        .head
-    newVehicles.addVehicleType(carVehicleType)
+    val vehicleTypes: TrieMap[Id[BeamVehicleType], BeamVehicleType] =
+      readBeamVehicleTypeFile(vehicleTypesFile, fuelTypes)
+
+    val carVehicleType = BeamVehicleUtils.beamVehicleTypeToMatsimVehicleType(vehicleTypes.values.find(vt => vt.vehicleCategory == Option(BeamVehicleType.Car)).getOrElse(BeamVehicleType.defaultCarBeamVehicleType))
+
     synthHouseholds.foreach(sh => {
       val numPersons = sh.individuals.length
       val N = if (numPersons * 2 > 0) {
@@ -489,7 +500,7 @@ object PlansSampler {
         newPerson.addPlan(newPlan)
         PopulationUtils.copyFromTo(plan, newPlan)
         val homeActs = newPlan.getPlanElements.asScala
-          .collect{ case activity: Activity if activity.getType.equalsIgnoreCase("Home") => activity }
+          .collect { case activity: Activity if activity.getType.equalsIgnoreCase("Home") => activity }
 
         homePlan match {
           case None =>
@@ -510,12 +521,16 @@ object PlansSampler {
         }
 
         PersonUtils.setAge(newPerson, synthPerson.age)
-        val sex = if (synthPerson.sex == 0) { "M" } else { "F" }
+        val sex = if (synthPerson.sex == 0) {
+          "M"
+        } else {
+          "F"
+        }
         // TODO: Include non-binary gender if data available
         PersonUtils.setSex(newPerson, sex)
         newPopAttributes
           .putAttribute(newPerson.getId.toString, "valueOfTime", synthPerson.valueOfTime)
-        newPopAttributes.putAttribute(newPerson.getId.toString, "income",synthPerson.income)
+        newPopAttributes.putAttribute(newPerson.getId.toString, "income", synthPerson.income)
         addModeExclusions(newPerson)
       }
 

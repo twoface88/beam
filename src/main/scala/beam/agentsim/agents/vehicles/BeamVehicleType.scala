@@ -4,8 +4,9 @@ import beam.agentsim.agents.vehicles.BeamVehicleType.{FuelTypeId, VehicleCategor
 import beam.agentsim.agents.vehicles.EnergyEconomyAttributes.Powertrain
 import beam.router.Modes.BeamMode
 import beam.router.Modes.BeamMode.{BIKE, CAR, NONE, RIDE_HAIL}
+import beam.utils.BeamVehicleUtils
 import org.matsim.api.core.v01.Id
-import org.matsim.vehicles.Vehicle
+import org.matsim.vehicles.{Vehicle, VehicleType, VehicleUtils}
 
 /**
   * Enumerates the names of recognized [[BeamVehicle]]s.
@@ -15,8 +16,8 @@ import org.matsim.vehicles.Vehicle
   */
 case class BeamVehicleType(
                             vehicleTypeId: String,
-                            seatingCapacity: Double,
-                            standingRoomCapacity: Double,
+                            seatingCapacity: Int,
+                            standingRoomCapacity: Int,
                             lengthInMeter: Double,
                             primaryFuelType: FuelType,
                             primaryFuelConsumptionInJoulePerMeter: Double,
@@ -108,6 +109,8 @@ object BeamVehicleType {
       case vid if vid.toLowerCase.contains("car") => CAR
 
     }
+
+
 //
 //    beamVehicle.beamVehicleType.vehicleCategory match {
 //      //TODO complete list

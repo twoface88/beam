@@ -183,8 +183,8 @@ object BeamServices {
       case (line, z) =>
         val vIdString = line.get("vehicleTypeId")
         val vehicleTypeId = Id.create(vIdString, classOf[BeamVehicleType])
-        val seatingCapacity = line.get("seatingCapacity").toDouble
-        val standingRoomCapacity = line.get("standingRoomCapacity").toDouble
+        val seatingCapacity = line.get("seatingCapacity").toInt
+        val standingRoomCapacity = line.get("standingRoomCapacity").toInt
         val lengthInMeter = line.get("lengthInMeter").toDouble
         val primaryFuelTypeId = line.get("primaryFuelType")
         val primaryFuelType = fuelTypeMap(Id.create(primaryFuelTypeId, classOf[FuelType]))
