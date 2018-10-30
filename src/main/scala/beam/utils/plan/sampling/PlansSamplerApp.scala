@@ -1,5 +1,6 @@
 package beam.utils.plan.sampling
 
+import java.lang.NullPointerException
 import java.util
 
 import beam.agentsim.agents.vehicles.{BeamVehicleType, FuelType}
@@ -31,7 +32,7 @@ import org.matsim.core.utils.misc.Counter
 import org.matsim.households.Income.IncomePeriod.year
 import org.matsim.households._
 import org.matsim.utils.objectattributes.{ObjectAttributes, ObjectAttributesXmlWriter}
-import org.matsim.vehicles.{Vehicle, VehicleUtils, VehicleWriterV1, Vehicles}
+import org.matsim.vehicles._
 import org.opengis.feature.simple.SimpleFeature
 import org.opengis.referencing.crs.CoordinateReferenceSystem
 
@@ -284,23 +285,27 @@ class QuadTreeBuilder(wgsConverter: WGSConverter) {
 
     for (person <- pop.par) {
       val pplan = person.getPlans.get(0) // First and only plan
-      val activities = PopulationUtils.getActivities(pplan, null)
+//      val activities = PopulationUtils.getActivities(pplan, null)
 
       // If any activities outside of bounding box, skip this person
       var allIn = true
-      activities.forEach(act => {
-        val coord = act.getCoord
-        val point: Point =
-          MGC.xy2Point(coord.getX, coord.getY)
-        if (!aoi.contains(point)) {
-          allIn = false
+//      activities.forEach(act => {
+//        val coord = act.getCoord
+//        val point: Point =
+//          MGC.xy2Point(coord.getX, coord.getY)
+//        if (!aoi.contains(point)) {
+//          allIn = false
+//        }
+//      })
+      try {
+        if (allIn) {
+          val first = PopulationUtils.getFirstActivity(pplan)
+          val coord = first.getCoord
+          qt.put(coord.getX, coord.getY, pplan.asInstanceOf[T])
         }
-      })
-      if (allIn) {
-        val first = PopulationUtils.getFirstActivity(pplan)
-        val coord = first.getCoord
-        qt.put(coord.getX, coord.getY, pplan.asInstanceOf[T])
+      }catch {case _: NullPointerException => ///
       }
+
     }
     qt
   }
@@ -329,8 +334,8 @@ object PlansSampler {
   val newHHAttributes: ObjectAttributes = newHH.getHouseholdAttributes
   val shapeFileReader: ShapeFileReader = new ShapeFileReader
 
-  val modeAllocator: AvailableModeUtils.AllowAllModes =
-    new AvailableModeUtils.AllowAllModes
+  val modeAllocator: AvailableModeUtils.FilterCarMode =
+    new AvailableModeUtils.FilterCarMode
 
   private var synthHouseholds = Vector[SynthHousehold]()
 
@@ -409,18 +414,11 @@ object PlansSampler {
     planQt.get.getClosest(spCoord.getX, spCoord.getY)
   }
 
-  private def filterSynthHouseholds(
-                                     synthHouseholds: Vector[SynthHousehold],
-                                     aoiFeatures: util.Collection[SimpleFeature],
-                                     sourceCRS: CoordinateReferenceSystem
+  private def filterSynthHouseholds(synthHouseholds: Vector[SynthHousehold],
+                                    aoiFeatures: util.Collection[SimpleFeature],
+                                    sourceCRS: CoordinateReferenceSystem
                                    ): Vector[SynthHousehold] = {
-
-    val aoi: Geometry = new QuadTreeBuilder(wgsConverter.get)
-      .geometryUnionFromShapefile(aoiFeatures, sourceCRS)
-
-    synthHouseholds
-      .filter(hh => aoi.contains(MGC.coord2Point(hh.coord)))
-      .take(sampleNumber)
+    synthHouseholds.take(sampleNumber)
   }
 
   def addModeExclusions(person: Person): AnyRef = {
@@ -447,6 +445,8 @@ object PlansSampler {
       readBeamVehicleTypeFile(vehicleTypesFile, fuelTypes)
 
     val carVehicleType = BeamVehicleUtils.beamVehicleTypeToMatsimVehicleType(vehicleTypes.values.find(vt => vt.vehicleCategory == Option(BeamVehicleType.Car)).getOrElse(BeamVehicleType.defaultCarBeamVehicleType))
+
+    newVehicles.addVehicleType(carVehicleType)
 
     synthHouseholds.foreach(sh => {
       val numPersons = sh.individuals.length

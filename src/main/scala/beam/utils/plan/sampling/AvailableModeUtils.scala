@@ -7,6 +7,7 @@ import beam.router.Modes.BeamMode
 import beam.router.Modes.BeamMode.{DRIVE_TRANSIT, RIDE_HAIL, RIDE_HAIL_TRANSIT, WALK, WALK_TRANSIT}
 import org.matsim.api.core.v01.Id
 import org.matsim.api.core.v01.population.{Person, Plan}
+import org.matsim.core.population.PersonUtils
 import org.matsim.core.population.algorithms.PermissibleModesCalculator
 import org.matsim.vehicles.Vehicle
 
@@ -23,6 +24,20 @@ object AvailableModeUtils {
       JavaConverters.asJavaCollection(BeamMode.availableModes.map(_.toString))
     }
   }
+
+  class FilterCarMode extends PermissibleModesCalculator {
+    override def getPermissibleModes(plan: Plan): util.Collection[String] = {
+      val modes = if (PersonUtils.getCarAvail(plan.getPerson) == "never") {
+        BeamMode.availableModes.filterNot(a => a == BeamMode.CAR)
+      } else {
+        BeamMode.availableModes
+      }
+      JavaConverters.asJavaCollection(modes.map {
+        _.toString
+      })
+    }
+  }
+
 
   def availableModeParser(availableModes: String): Seq[BeamMode] = {
     availableModes.split(",").toSeq map BeamMode.withValue
@@ -41,11 +56,12 @@ object AvailableModeUtils {
   }
 
   def isModeAvailableForPerson[T <: BeamMode](
-    person: Person,
-    vehicleId: Id[Vehicle],
-    mode: BeamMode
-  ): Boolean = {
-    AvailableModeUtils.availableModesForPerson(person).contains(mode)
+                                               person: Person,
+                                               vehicleId: Id[Vehicle],
+                                               mode: BeamMode
+                                             ): Boolean = {
+    availableModesForPerson(person).contains(mode)
   }
+
 
 }
