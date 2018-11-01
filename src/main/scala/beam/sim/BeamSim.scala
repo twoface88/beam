@@ -25,15 +25,15 @@ import com.google.inject.Inject
 import com.typesafe.scalalogging.LazyLogging
 import org.matsim.api.core.v01.Scenario
 import org.matsim.core.api.experimental.events.EventsManager
-import org.matsim.core.controler.events.{IterationEndsEvent, ShutdownEvent, StartupEvent}
-import org.matsim.core.controler.listener.{IterationEndsListener, ShutdownListener, StartupListener}
+import org.matsim.core.controler.events.{IterationEndsEvent, IterationStartsEvent, ShutdownEvent, StartupEvent}
+import org.matsim.core.controler.listener.{IterationEndsListener, IterationStartsListener, ShutdownListener, StartupListener}
 import org.matsim.vehicles.VehicleCapacity
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.{Deadline, Duration}
 import scala.concurrent.{Await, Future}
 
 class BeamSim @Inject()(
@@ -44,6 +44,7 @@ class BeamSim @Inject()(
   private val scenario: Scenario,
 ) extends StartupListener
     with IterationEndsListener
+    with IterationStartsListener
     with ShutdownListener
     with LazyLogging
     with MetricsSupport {
@@ -205,7 +206,8 @@ class BeamSim @Inject()(
     )
     //    Tracer.currentContext.finish()
 
-    logger.info("Ending Iteration")
+    val diff = Deadline.now - iterationStart
+    logger.info("Fully finished iteration {} in {} seconds", event.getIteration, diff.toSeconds)
   }
 
   override def notifyShutdown(event: ShutdownEvent): Unit = {
@@ -253,5 +255,11 @@ class BeamSim @Inject()(
     }
 
     out.close()
+  }
+
+  var iterationStart: Deadline = Deadline.now
+  override def notifyIterationStarts(event: IterationStartsEvent): Unit = {
+    iterationStart = Deadline.now
+    logger.info("Started iteration {}", event.getIteration)
   }
 }
