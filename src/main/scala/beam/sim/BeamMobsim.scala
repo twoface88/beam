@@ -33,10 +33,8 @@ import org.matsim.api.core.v01.population.{Activity, Person}
 import org.matsim.api.core.v01.{Coord, Id, Scenario}
 import org.matsim.core.api.experimental.events.EventsManager
 import org.matsim.core.mobsim.framework.Mobsim
-import org.matsim.core.scenario.{MutableScenario, ScenarioUtils}
 import org.matsim.core.utils.misc.Time
 import org.matsim.households.Household
-import org.matsim.vehicles.{Vehicle, VehicleType, VehicleUtils}
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
@@ -67,8 +65,6 @@ class BeamMobsim @Inject()(
   var rideHailAgents: ArrayBuffer[ActorRef] = new ArrayBuffer()
 
   val rideHailHouseholds: mutable.Set[Id[Household]] = mutable.Set()
-
-  val MaxHour: Int = 24
 
   var debugActorWithTimerActorRef: ActorRef = _
   var debugActorWithTimerCancellable: Cancellable = _
@@ -105,6 +101,7 @@ class BeamMobsim @Inject()(
 
   override def run(): Unit = {
     logger.info("Starting Iteration")
+    val startTime = Deadline.now
     startMeasuringIteration(beamServices.iterationNumber)
     logger.info("Preparing new Iteration (Start)")
     startSegment("iteration-preparation", "mobsim")
@@ -115,6 +112,8 @@ class BeamMobsim @Inject()(
     eventsManager.initProcessing()
     val iteration = actorSystem.actorOf(
       Props(new Actor with ActorLogging {
+        val initStartTime = Deadline.now
+
         var runSender: ActorRef = _
         private val errorListener = context.actorOf(ErrorListener.props())
         context.watch(errorListener)
@@ -360,12 +359,15 @@ class BeamMobsim @Inject()(
         if (beamServices.iterationNumber == 0) {
           val maxHour = TimeUnit.SECONDS.toHours(beamServices.travelTimeCalculatorConfigGroup.getMaxTime).toInt
           val warmStart = BeamWarmStart(beamServices.beamConfig, maxHour)
-          warmStart.warmStartTravelTime(beamServices.beamRouter)
+          warmStart.warmStartTravelTime(beamServices.beamRouter, scenario)
         }
 
         log.info("Transit schedule has been initialized")
 
         scheduleRideHailManagerTimerMessages()
+
+        val diff = Deadline.now - initStartTime
+        log.info("Init for iteration {} finished in {} seconds", beamServices.iterationNumber, diff.toSeconds)
 
         def prepareMemoryLoggingTimerActor(
           timeoutInSeconds: Int,
@@ -449,8 +451,8 @@ class BeamMobsim @Inject()(
       "BeamMobsim.iteration"
     )
     Await.result(iteration ? "Run!", timeout.duration)
-
-    logger.info("Agentsim finished.")
+    val diff = Deadline.now - startTime
+    logger.info("AgentSim with initialization for iteration {} finished in {} seconds", beamServices.iterationNumber, diff.toSeconds)
     eventsManager.finishProcessing()
     logger.info("Events drained.")
     endSegment("agentsim-events", "agentsim")

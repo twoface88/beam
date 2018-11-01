@@ -13,6 +13,7 @@ import beam.sim.BeamServices;
 import beam.sim.config.BeamConfig;
 import beam.sim.metrics.MetricsSupport;
 import beam.utils.DebugLib;
+import beam.utils.TravelTimeCalculatorHelper;
 import com.conveyal.r5.transit.TransportNetwork;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
@@ -137,7 +138,7 @@ public class AgentSimToPhysSimPlanConverter implements BasicEventHandler, Metric
         config.setSimulationEndTime(beamConfig.matsim().modules().qsim().endTime());
         JDEQSimulation jdeqSimulation = new JDEQSimulation(config, jdeqSimScenario, jdeqsimEvents);
 
-        linkStatsGraph.notifyIterationStarts(jdeqsimEvents,  agentSimScenario.getConfig().travelTimeCalculator());
+        // linkStatsGraph.notifyIterationStarts(jdeqsimEvents,  agentSimScenario.getConfig().travelTimeCalculator());
 
         log.info("JDEQSim Start");
         startSegment("jdeqsim-execution", "jdeqsim");
@@ -169,16 +170,29 @@ public class AgentSimToPhysSimPlanConverter implements BasicEventHandler, Metric
             }
         }
 
-        completableFutures.add(CompletableFuture.runAsync(() -> {
-            linkStatsGraph.notifyIterationEnds(iterationNumber, travelTimeCalculator);
-            linkStatsGraph.clean();
-        }));
+        // I don't use single class `UpdateTravelTime` here and make decision in `BeamRouter` because
+        // below we have `linkStatsGraph.notifyIterationEnds` call which internally will call `BeamCalcLinkStats.addData`
+        // which may change an internal state of travel time calculator (and it happens concurrently in CompletableFuture)
+        //################################################################################################################
+        Collection<? extends Link> links = agentSimScenario.getNetwork().getLinks().values();
+        int maxHour = (int) TimeUnit.SECONDS.toHours(agentSimScenario.getConfig().travelTimeCalculator().getMaxTime());
+        Map<String, double[]> map = TravelTimeCalculatorHelper.GetLinkIdToTravelTimeArray(links,
+                travelTimeCalculator.getLinkTravelTimes(), maxHour);
+        router.tell(new BeamRouter.TryToSerialize(map), ActorRef.noSender());
+        router.tell(new BeamRouter.UpdateTravelTimeRemote(map), ActorRef.noSender());
+        //################################################################################################################
+        router.tell(new BeamRouter.UpdateTravelTimeLocal(travelTimeCalculator.getLinkTravelTimes()), ActorRef.noSender());
 
-        completableFutures.add(CompletableFuture.runAsync(() -> linkSpeedStatsGraph.notifyIterationEnds(iterationNumber, travelTimeCalculator)));
-
-
-        completableFutures.add(CompletableFuture.runAsync(() -> linkSpeedDistributionStatsGraph.notifyIterationEnds(iterationNumber, travelTimeCalculator)));
-
+//        completableFutures.add(CompletableFuture.runAsync(() -> {
+//            linkStatsGraph.notifyIterationEnds(iterationNumber, travelTimeCalculator);
+//            linkStatsGraph.clean();
+//        }));
+//
+//        completableFutures.add(CompletableFuture.runAsync(() -> linkSpeedStatsGraph.notifyIterationEnds(iterationNumber, travelTimeCalculator)));
+//
+//
+//        completableFutures.add(CompletableFuture.runAsync(() -> linkSpeedDistributionStatsGraph.notifyIterationEnds(iterationNumber, travelTimeCalculator)));
+//
 
         if (shouldWritePhysSimEvents(iterationNumber)) {
             assert eventsWriterXML != null;
@@ -190,19 +204,18 @@ public class AgentSimToPhysSimPlanConverter implements BasicEventHandler, Metric
         jdeqSimScenario.setNetwork(null);
         jdeqSimScenario.setPopulation(null);
 
-        if (iterationNumber == beamConfig.matsim().modules().controler().lastIteration()) {
-            try {
-                CompletableFuture allOfLinStatFutures = CompletableFuture.allOf(completableFutures.toArray(new CompletableFuture[0]));
-                log.info("Waiting started on link stats file dump.");
-                allOfLinStatFutures.get(20, TimeUnit.MINUTES);
-                log.info("Link stats file dump completed.");
+//        if (iterationNumber == beamConfig.matsim().modules().controler().lastIteration()) {
+//            try {
+//                CompletableFuture allOfLinStatFutures = CompletableFuture.allOf(completableFutures.toArray(new CompletableFuture[0]));
+//                log.info("Waiting started on link stats file dump.");
+//                allOfLinStatFutures.get(20, TimeUnit.MINUTES);
+//                log.info("Link stats file dump completed.");
+//
+//            } catch (InterruptedException | ExecutionException | TimeoutException e) {
+//                log.error("Error while generating link stats.", e);
+//            }
+//        }
 
-            } catch (InterruptedException | ExecutionException | TimeoutException e) {
-                log.error("Error while generating link stats.", e);
-            }
-        }
-
-        router.tell(new BeamRouter.UpdateTravelTime(travelTimeCalculator.getLinkTravelTimes()), ActorRef.noSender());
     }
 
     private boolean shouldWritePhysSimEvents(int iterationNumber) {

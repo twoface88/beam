@@ -10,20 +10,17 @@ import akka.actor._
 import akka.pattern._
 import beam.agentsim.agents.household.HouseholdActor
 import beam.agentsim.agents.modalbehaviors.ModeChoiceCalculator
-import beam.agentsim.agents.vehicles.{BeamVehicle, BeamVehicleType, FuelType}
-import beam.agentsim.agents.vehicles.EnergyEconomyAttributes.Powertrain
 import beam.agentsim.agents.vehicles.VehicleProtocol.StreetVehicle
 import beam.agentsim.agents.vehicles.{BeamVehicle, BeamVehicleType, FuelType}
 import beam.agentsim.events.SpaceTime
 import beam.router.BeamRouter._
 import beam.router.Modes.BeamMode.{CAR, WALK}
 import beam.router.Modes._
-import beam.router.model.BeamLeg._
-import beam.router.model.{EmbodiedBeamTrip, _}
 import beam.router.gtfs.FareCalculator
 import beam.router.gtfs.FareCalculator._
-import beam.router.model.RoutingModel
+import beam.router.model.BeamLeg._
 import beam.router.model.RoutingModel.{DiscreteTime, LinksTimesDistances, WindowTime}
+import beam.router.model.{EmbodiedBeamTrip, RoutingModel, _}
 import beam.router.osm.TollCalculator
 import beam.router.r5.R5RoutingWorker.{R5Request, TripWithFares}
 import beam.router.r5.profile.BeamMcRaptorSuboptimalPathProfileRouter
@@ -33,7 +30,7 @@ import beam.sim.common.{GeoUtils, GeoUtilsImpl}
 import beam.sim.config.{BeamConfig, MatSimBeamConfigBuilder}
 import beam.sim.metrics.{Metrics, MetricsSupport}
 import beam.utils.reflection.ReflectionUtils
-import beam.utils.{DateUtils, FileUtils, LoggingUtil}
+import beam.utils.{DateUtils, FileUtils, LoggingUtil, TravelTimeCalculatorHelper}
 import com.conveyal.r5.api.ProfileResponse
 import com.conveyal.r5.api.util._
 import com.conveyal.r5.profile._
@@ -44,7 +41,7 @@ import com.google.inject.Injector
 import com.typesafe.config.Config
 import org.matsim.api.core.v01.network.Network
 import org.matsim.api.core.v01.population.Person
-import org.matsim.api.core.v01.{Coord, Id}
+import org.matsim.api.core.v01.{Coord, Id, Scenario}
 import org.matsim.core.config.groups.TravelTimeCalculatorConfigGroup
 import org.matsim.core.controler.ControlerI
 import org.matsim.core.router.util.TravelTime
@@ -59,12 +56,13 @@ import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.postfixOps
-import scala.util.{Try, Success, Failure}
+import scala.util.{Failure, Success, Try}
 
 case class WorkerParameters(
   beamServices: BeamServices,
   transportNetwork: TransportNetwork,
   network: Network,
+  scenario: Scenario,
   fareCalculator: FareCalculator,
   tollCalculator: TollCalculator,
   transitVehicles: Vehicles,
@@ -130,7 +128,7 @@ class R5RoutingWorker(workerParams: WorkerParameters) extends Actor with ActorLo
 
         override def rideHailIterationHistoryActor: akka.actor.ActorRef = ???
 
-        override  val travelTimeCalculatorConfigGroup: TravelTimeCalculatorConfigGroup = ???
+        override  val travelTimeCalculatorConfigGroup: TravelTimeCalculatorConfigGroup = matsimConfig.travelTimeCalculator()
       }
 
       val initializer = new TransitInitializer(beamServices, transportNetwork, scenario.getTransitVehicles)
@@ -142,6 +140,7 @@ class R5RoutingWorker(workerParams: WorkerParameters) extends Actor with ActorLo
         beamServices,
         transportNetwork,
         network,
+        scenario,
         fareCalculator,
         tollCalculator,
         scenario.getTransitVehicles,
@@ -154,6 +153,7 @@ class R5RoutingWorker(workerParams: WorkerParameters) extends Actor with ActorLo
     beamServices,
     transportNetwork,
     network,
+    scenario,
     fareCalculator,
     tollCalculator,
     transitVehicles,
@@ -216,7 +216,7 @@ class R5RoutingWorker(workerParams: WorkerParameters) extends Actor with ActorLo
               firstMsgTime = None
               msgs = 0
             }
-            log.debug(
+            log.info(
               "Receiving {} per seconds of RoutingRequest with first message time set to {} for the next round",
               rate,
               firstMsgTime
@@ -248,13 +248,20 @@ class R5RoutingWorker(workerParams: WorkerParameters) extends Actor with ActorLo
       }
       eventualResponse pipeTo sender
       askForMoreWork()
-    case UpdateTravelTime(travelTime) =>
-      if (!beamServices.beamConfig.beam.cluster.enabled) {
-        log.info(s"{} UpdateTravelTime", getNameAndHashCode)
-        maybeTravelTime = Some(travelTime)
-        cache.invalidateAll()
-      }
+
+    case UpdateTravelTimeLocal(travelTime) =>
+      maybeTravelTime = Some(travelTime)
+      log.info(s"{} UpdateTravelTimeLocal. Set new travel time", getNameAndHashCode)
+      cache.invalidateAll()
       askForMoreWork()
+
+    case UpdateTravelTimeRemote(map) =>
+      val travelTimeCalc = TravelTimeCalculatorHelper.CreateTravelTimeCalculator(beamServices.beamConfig.beam.agentsim.timeBinSize, map)
+      maybeTravelTime = Some(travelTimeCalc)
+      log.info(s"{} UpdateTravelTimeRemote. Set new travel time from map with size {}", getNameAndHashCode, map.keySet().size())
+      cache.invalidateAll()
+      askForMoreWork
+
     case EmbodyWithCurrentTravelTime(
         leg: BeamLeg,
         vehicleId: Id[Vehicle],
@@ -1231,6 +1238,7 @@ object R5RoutingWorker {
     beamServices: BeamServices,
     transportNetwork: TransportNetwork,
     network: Network,
+    scenario: Scenario,
     fareCalculator: FareCalculator,
     tollCalculator: TollCalculator,
     transitVehicles: Vehicles
@@ -1241,6 +1249,7 @@ object R5RoutingWorker {
           beamServices,
           transportNetwork,
           network,
+          scenario,
           fareCalculator,
           tollCalculator,
           transitVehicles,
