@@ -138,7 +138,7 @@ public class AgentSimToPhysSimPlanConverter implements BasicEventHandler, Metric
         config.setSimulationEndTime(beamConfig.matsim().modules().qsim().endTime());
         JDEQSimulation jdeqSimulation = new JDEQSimulation(config, jdeqSimScenario, jdeqsimEvents);
 
-        linkStatsGraph.notifyIterationStarts(jdeqsimEvents,  agentSimScenario.getConfig().travelTimeCalculator());
+        // linkStatsGraph.notifyIterationStarts(jdeqsimEvents,  agentSimScenario.getConfig().travelTimeCalculator());
 
         log.info("JDEQSim Start");
         startSegment("jdeqsim-execution", "jdeqsim");
@@ -183,16 +183,16 @@ public class AgentSimToPhysSimPlanConverter implements BasicEventHandler, Metric
         //################################################################################################################
         router.tell(new BeamRouter.UpdateTravelTimeLocal(travelTimeCalculator.getLinkTravelTimes()), ActorRef.noSender());
 
-        completableFutures.add(CompletableFuture.runAsync(() -> {
-            linkStatsGraph.notifyIterationEnds(iterationNumber, travelTimeCalculator);
-            linkStatsGraph.clean();
-        }));
-
-        completableFutures.add(CompletableFuture.runAsync(() -> linkSpeedStatsGraph.notifyIterationEnds(iterationNumber, travelTimeCalculator)));
-
-
-        completableFutures.add(CompletableFuture.runAsync(() -> linkSpeedDistributionStatsGraph.notifyIterationEnds(iterationNumber, travelTimeCalculator)));
-
+//        completableFutures.add(CompletableFuture.runAsync(() -> {
+//            linkStatsGraph.notifyIterationEnds(iterationNumber, travelTimeCalculator);
+//            linkStatsGraph.clean();
+//        }));
+//
+//        completableFutures.add(CompletableFuture.runAsync(() -> linkSpeedStatsGraph.notifyIterationEnds(iterationNumber, travelTimeCalculator)));
+//
+//
+//        completableFutures.add(CompletableFuture.runAsync(() -> linkSpeedDistributionStatsGraph.notifyIterationEnds(iterationNumber, travelTimeCalculator)));
+//
 
         if (shouldWritePhysSimEvents(iterationNumber)) {
             assert eventsWriterXML != null;
@@ -204,17 +204,17 @@ public class AgentSimToPhysSimPlanConverter implements BasicEventHandler, Metric
         jdeqSimScenario.setNetwork(null);
         jdeqSimScenario.setPopulation(null);
 
-        if (iterationNumber == beamConfig.matsim().modules().controler().lastIteration()) {
-            try {
-                CompletableFuture allOfLinStatFutures = CompletableFuture.allOf(completableFutures.toArray(new CompletableFuture[0]));
-                log.info("Waiting started on link stats file dump.");
-                allOfLinStatFutures.get(20, TimeUnit.MINUTES);
-                log.info("Link stats file dump completed.");
-
-            } catch (InterruptedException | ExecutionException | TimeoutException e) {
-                log.error("Error while generating link stats.", e);
-            }
-        }
+//        if (iterationNumber == beamConfig.matsim().modules().controler().lastIteration()) {
+//            try {
+//                CompletableFuture allOfLinStatFutures = CompletableFuture.allOf(completableFutures.toArray(new CompletableFuture[0]));
+//                log.info("Waiting started on link stats file dump.");
+//                allOfLinStatFutures.get(20, TimeUnit.MINUTES);
+//                log.info("Link stats file dump completed.");
+//
+//            } catch (InterruptedException | ExecutionException | TimeoutException e) {
+//                log.error("Error while generating link stats.", e);
+//            }
+//        }
 
     }
 
