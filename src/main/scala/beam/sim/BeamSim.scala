@@ -192,7 +192,7 @@ class BeamSim @Inject()(
     )
     logger.info("r5-plans count for iteration {} is {}", event.getIteration, beamServices.r5PlansCount)
     //    Tracer.currentContext.finish()
-
+    beamServices.r5PlansCount = 0
     logger.info("Ending Iteration")
   }
 
