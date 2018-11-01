@@ -334,6 +334,7 @@ class R5RoutingWorker(workerParams: WorkerParameters) extends Actor with ActorLo
 
   def getPlanFromR5(request: R5Request): ProfileResponse = {
     val maxStreetTime = 2 * 60
+    beamServices.r5PlansCount = beamServices.r5PlansCount + 1
     // If we already have observed travel times, probably from the pre
     // let R5 use those. Otherwise, let R5 use its own travel time estimates.
     val profileRequest = new ProfileRequest()

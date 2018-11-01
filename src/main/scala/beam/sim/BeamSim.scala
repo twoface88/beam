@@ -190,6 +190,7 @@ class BeamSim @Inject()(
       event.getIteration,
       persons.map(_.getPlans.size()).sum.toFloat / persons.size
     )
+    logger.info("r5-plans count for iteration {} is {}", event.getIteration, beamServices.r5PlansCount)
     //    Tracer.currentContext.finish()
 
     logger.info("Ending Iteration")

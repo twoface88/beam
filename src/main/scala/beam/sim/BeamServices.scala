@@ -56,6 +56,7 @@ trait BeamServices extends ActorInject {
   val tazTreeMap: TAZTreeMap
 
   var iterationNumber: Int = -1
+  var r5PlansCount: Int = 0
   def startNewIteration()
 }
 
