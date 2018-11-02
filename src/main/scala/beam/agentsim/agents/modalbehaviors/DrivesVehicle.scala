@@ -146,7 +146,7 @@ trait DrivesVehicle[T <: DrivingData] extends BeamAgent[T] with HasServices with
                 }
               }
 
-              processLinkEvents(data.currentVehicle.head, currentLeg)
+//              processLinkEvents(data.currentVehicle.head, currentLeg)
 
               logDebug("PathTraversal")
               eventsManager.processEvent(
