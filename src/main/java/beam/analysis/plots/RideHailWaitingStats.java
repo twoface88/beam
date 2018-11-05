@@ -175,7 +175,7 @@ public class RideHailWaitingStats implements IGraphStats {
                 double difference = personEntersVehicleEvent.getTime() - modeChoiceEvent.getTime();
                 processRideHailWaitingTimes(modeChoiceEvent, difference);
 
-                // Building the RideHailWaitingIndividualStat List
+                // CsvToMap the RideHailWaitingIndividualStat List
                 String __vehicleId = eventAttributes.get(PersonEntersVehicleEvent.ATTRIBUTE_VEHICLE);
                 String __personId = eventAttributes.get(PersonEntersVehicleEvent.ATTRIBUTE_PERSON);
 
