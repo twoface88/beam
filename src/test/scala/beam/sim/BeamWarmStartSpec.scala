@@ -34,8 +34,8 @@ class BeamWarmStartSpec extends WordSpecLike with Matchers with BeforeAndAfterAl
 
       val warmStart: BeamWarmStart = getWarmStart(caseDataPath)
 
-      val actualPlans = warmStart.getWarmStartFilePath(PLANS_GZ)
-      val actualStats = warmStart.getWarmStartFilePath(LINK_STATS_GZ)
+      val actualPlans = warmStart.getWarmStartFilePaths(PLANS_GZ)
+      val actualStats = warmStart.getWarmStartFilePaths(LINK_STATS_GZ)
 
       actualPlans shouldEqual expectedPlans
       actualStats shouldEqual expectedStats
@@ -49,8 +49,8 @@ class BeamWarmStartSpec extends WordSpecLike with Matchers with BeforeAndAfterAl
 
       val warmStart: BeamWarmStart = getWarmStart(caseDataPath)
 
-      val actualPlans = warmStart.getWarmStartFilePath(PLANS_GZ)
-      val actualStats = warmStart.getWarmStartFilePath(LINK_STATS_GZ)
+      val actualPlans = warmStart.getWarmStartFilePaths(PLANS_GZ)
+      val actualStats = warmStart.getWarmStartFilePaths(LINK_STATS_GZ)
 
       actualPlans shouldEqual expectedPlans
       actualStats shouldEqual expectedStats
@@ -64,8 +64,8 @@ class BeamWarmStartSpec extends WordSpecLike with Matchers with BeforeAndAfterAl
 
       val warmStart: BeamWarmStart = getWarmStart(caseDataPath)
 
-      val actualPlans = warmStart.getWarmStartFilePath(PLANS_GZ)
-      val actualStats = warmStart.getWarmStartFilePath(LINK_STATS_GZ)
+      val actualPlans = warmStart.getWarmStartFilePaths(PLANS_GZ)
+      val actualStats = warmStart.getWarmStartFilePaths(LINK_STATS_GZ)
 
       actualPlans shouldEqual expectedPlans
       actualStats shouldEqual expectedStats
@@ -80,8 +80,8 @@ class BeamWarmStartSpec extends WordSpecLike with Matchers with BeforeAndAfterAl
 
       val warmStart: BeamWarmStart = getWarmStart(caseDataPath)
 
-      val actualPlans = warmStart.getWarmStartFilePath(PLANS_GZ)
-      val actualStats = warmStart.getWarmStartFilePath(LINK_STATS_GZ)
+      val actualPlans = warmStart.getWarmStartFilePaths(PLANS_GZ)
+      val actualStats = warmStart.getWarmStartFilePaths(LINK_STATS_GZ)
 
       actualPlans shouldEqual expectedPlans
       actualStats shouldEqual expectedStats
@@ -96,8 +96,8 @@ class BeamWarmStartSpec extends WordSpecLike with Matchers with BeforeAndAfterAl
 
       val warmStart: BeamWarmStart = getWarmStart(caseDataPath)
 
-      val actualPlans = warmStart.getWarmStartFilePath(PLANS_GZ)
-      val actualStats = warmStart.getWarmStartFilePath(LINK_STATS_GZ)
+      val actualPlans = warmStart.getWarmStartFilePaths(PLANS_GZ)
+      val actualStats = warmStart.getWarmStartFilePaths(LINK_STATS_GZ)
 
       actualPlans shouldEqual expectedPlans
       actualStats shouldEqual expectedStats
@@ -117,8 +117,8 @@ class BeamWarmStartSpec extends WordSpecLike with Matchers with BeforeAndAfterAl
 
       val warmStart: BeamWarmStart = getWarmStart(caseDataPath)
 
-      val actualPlans = warmStart.getWarmStartFilePath(PLANS_GZ)
-      val actualStats = warmStart.getWarmStartFilePath(LINK_STATS_GZ, rootFirst = false)
+      val actualPlans = warmStart.getWarmStartFilePaths(PLANS_GZ)
+      val actualStats = warmStart.getWarmStartFilePaths(LINK_STATS_GZ, rootFirst = false)
 
       actualPlans shouldEqual expectedPlans
       actualStats shouldEqual expectedStats
@@ -134,8 +134,8 @@ class BeamWarmStartSpec extends WordSpecLike with Matchers with BeforeAndAfterAl
 
       val warmStart: BeamWarmStart = getWarmStart(caseDataPath)
 
-      val actualPlans = warmStart.getWarmStartFilePath(PLANS_GZ)
-      val actualStats = warmStart.getWarmStartFilePath(LINK_STATS_GZ, rootFirst = false)
+      val actualPlans = warmStart.getWarmStartFilePaths(PLANS_GZ)
+      val actualStats = warmStart.getWarmStartFilePaths(LINK_STATS_GZ, rootFirst = false)
 
       actualPlans shouldEqual expectedPlans
       actualStats shouldEqual expectedStats
@@ -152,8 +152,8 @@ class BeamWarmStartSpec extends WordSpecLike with Matchers with BeforeAndAfterAl
 
       val warmStart: BeamWarmStart = getWarmStart(caseDataPath)
 
-      val actualPlans = warmStart.getWarmStartFilePath(PLANS_GZ)
-      val actualStats = warmStart.getWarmStartFilePath(LINK_STATS_GZ, rootFirst = false)
+      val actualPlans = warmStart.getWarmStartFilePaths(PLANS_GZ)
+      val actualStats = warmStart.getWarmStartFilePaths(LINK_STATS_GZ, rootFirst = false)
 
       actualPlans shouldEqual expectedPlans
       actualStats shouldEqual expectedStats
@@ -171,8 +171,8 @@ class BeamWarmStartSpec extends WordSpecLike with Matchers with BeforeAndAfterAl
 
       val warmStart: BeamWarmStart = getWarmStart(caseDataPath)
 
-      val actualPlans = warmStart.getWarmStartFilePath(PLANS_GZ)
-      val actualStats = warmStart.getWarmStartFilePath(LINK_STATS_GZ, rootFirst = false)
+      val actualPlans = warmStart.getWarmStartFilePaths(PLANS_GZ)
+      val actualStats = warmStart.getWarmStartFilePaths(LINK_STATS_GZ, rootFirst = false)
 
       actualPlans shouldEqual expectedPlans
       actualStats shouldEqual expectedStats
@@ -192,8 +192,8 @@ class BeamWarmStartSpec extends WordSpecLike with Matchers with BeforeAndAfterAl
 
       val warmStart: BeamWarmStart = getWarmStart(caseDataPath)
 
-      val actualPlans = warmStart.getWarmStartFilePath(PLANS_GZ)
-      val actualStats = warmStart.getWarmStartFilePath(LINK_STATS_GZ, rootFirst = false)
+      val actualPlans = warmStart.getWarmStartFilePaths(PLANS_GZ)
+      val actualStats = warmStart.getWarmStartFilePaths(LINK_STATS_GZ, rootFirst = false)
 
       actualPlans shouldEqual expectedPlans
       actualStats shouldEqual expectedStats
@@ -210,8 +210,8 @@ class BeamWarmStartSpec extends WordSpecLike with Matchers with BeforeAndAfterAl
 
       val warmStart: BeamWarmStart = getWarmStart(caseDataPath)
 
-      val actualPlans = warmStart.getWarmStartFilePath(PLANS_GZ)
-      val actualStats = warmStart.getWarmStartFilePath(LINK_STATS_GZ, rootFirst = false)
+      val actualPlans = warmStart.getWarmStartFilePaths(PLANS_GZ)
+      val actualStats = warmStart.getWarmStartFilePaths(LINK_STATS_GZ, rootFirst = false)
 
       actualPlans shouldEqual expectedPlans
       actualStats shouldEqual expectedStats
@@ -229,8 +229,8 @@ class BeamWarmStartSpec extends WordSpecLike with Matchers with BeforeAndAfterAl
 
       val warmStart: BeamWarmStart = getWarmStart(caseDataPath)
 
-      val actualPlans = warmStart.getWarmStartFilePath(PLANS_GZ)
-      val actualStats = warmStart.getWarmStartFilePath(LINK_STATS_GZ, rootFirst = false)
+      val actualPlans = warmStart.getWarmStartFilePaths(PLANS_GZ)
+      val actualStats = warmStart.getWarmStartFilePaths(LINK_STATS_GZ, rootFirst = false)
 
       actualPlans shouldEqual expectedPlans
       actualStats shouldEqual expectedStats
@@ -248,8 +248,8 @@ class BeamWarmStartSpec extends WordSpecLike with Matchers with BeforeAndAfterAl
 
       val warmStart: BeamWarmStart = getWarmStart(caseDataPath)
 
-      val actualPlans = warmStart.getWarmStartFilePath(PLANS_GZ)
-      val actualStats = warmStart.getWarmStartFilePath(LINK_STATS_GZ, rootFirst = false)
+      val actualPlans = warmStart.getWarmStartFilePaths(PLANS_GZ)
+      val actualStats = warmStart.getWarmStartFilePaths(LINK_STATS_GZ, rootFirst = false)
 
       actualPlans shouldEqual expectedPlans
       actualStats shouldEqual expectedStats

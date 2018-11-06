@@ -1,6 +1,6 @@
 package beam.sim
 
-import java.io.File
+import java.io.{File, FileNotFoundException}
 import java.nio.file.{Files, Paths}
 
 import akka.actor.ActorRef
@@ -16,8 +16,9 @@ import org.matsim.core.config.Config
 import org.matsim.core.router.util.TravelTime
 
 import scala.compat.java8.StreamConverters._
+import scala.util.{Failure, Success, Try}
 
-class BeamWarmStart private (beamConfig: BeamConfig, maxHour: Int) extends LazyLogging {
+class BeamWarmStart private(beamConfig: BeamConfig, maxHour: Int) extends LazyLogging {
 
   private lazy val srcPath = beamConfig.beam.warmStart.path
 
@@ -33,7 +34,7 @@ class BeamWarmStart private (beamConfig: BeamConfig, maxHour: Int) extends LazyL
     */
   def warmStartTravelTime(beamRouter: ActorRef): Unit = {
     if (!isWarmMode) {} else {
-      getWarmStartFilePath("linkstats.csv.gz", rootFirst = false) match {
+      getWarmStartFilePaths("linkstats.csv.gz", rootFirst = false) match {
         case Some(statsPath) =>
           if (Files.exists(Paths.get(statsPath))) {
             beamRouter ! UpdateTravelTime(getTravelTime(statsPath))
@@ -56,36 +57,39 @@ class BeamWarmStart private (beamConfig: BeamConfig, maxHour: Int) extends LazyL
   /**
     * initialize population.
     */
-  def warmStartPopulation(matsimConfig: Config): Unit = {
-    if (!isWarmMode) {} else {
-      getWarmStartFilePath("plans.xml.gz") match {
+  def warmStartPopulationFile(matsimConfig: Config, warmStartFile: String, fileType: String): Try[String] = {
+    if (isWarmMode) {
+
+      getWarmStartFilePaths(warmStartFile) match {
         case Some(statsPath) =>
           if (Files.exists(Paths.get(statsPath))) {
-            val populationFile = loadPopulation(parentRunPath, statsPath)
-            matsimConfig.plans().setInputFile(populationFile)
-            logger.info("Population successfully warm started from {}", statsPath)
+            val populationFile = loadItrFileFromRunPath(parentRunPath, statsPath, fileType)
+            if (fileType.equals("warmstart_plans.xml")) {
+              matsimConfig.plans().setInputFile(populationFile)
+              Success(s"Population successfully warm started from $statsPath")
+            }else {
+              matsimConfig.plans().setInputPersonAttributeFile(populationFile)
+              Success(s"Population attributes file successfully warm started from $statsPath")
+            }
           } else {
-            logger.warn(
-              "Population failed to warm start, plans not found at path ( {} )",
-              statsPath
-            )
+            Failure(throw new FileNotFoundException(s"Population file failed to warm start, plans not found at path $statsPath"))
           }
         case None =>
-          logger.warn(
-            "Population failed to warm start, plans not found at path ( {} )",
-            srcPath
-          )
+          Failure(throw new FileNotFoundException(s"Population file failed to warm start, plans not found at path $warmStartFile"))
       }
+    }
+    else {
+      Success("Not warm-starting")
     }
   }
 
-  private def loadPopulation(runPath: String, populationFile: String): String = {
-    val plansPath = Paths.get(runPath, "warmstart_plans.xml")
-    unGunzipFile(populationFile, plansPath.toString, false)
+  private def loadItrFileFromRunPath(runPath: String, itrFileName: String, fileType: String): String = {
+    val plansPath = Paths.get(runPath, fileType)
+    unGunzipFile(itrFileName, plansPath.toString, false)
     plansPath.toString
   }
 
-  def getWarmStartFilePath(warmStartFile: String, rootFirst: Boolean = true): Option[String] = {
+  def getWarmStartFilePaths(warmStartFile: String, rootFirst: Boolean = true): Option[String] = {
     lazy val itrFile = findIterationWarmStartFile(warmStartFile, parentRunPath)
     lazy val rootFile = findRootWarmStartFile(warmStartFile)
 
