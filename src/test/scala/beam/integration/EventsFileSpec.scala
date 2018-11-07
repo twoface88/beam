@@ -2,9 +2,11 @@ package beam.integration
 
 import java.io.File
 
+import beam.agentsim.events.PathTraversalEvent
 import beam.sim.BeamHelper
 import beam.sim.config.BeamConfig
 import com.typesafe.config.{Config, ConfigValueFactory}
+import org.matsim.api.core.v01.events.PersonEntersVehicleEvent
 import org.matsim.api.core.v01.population.{Activity, Leg}
 import org.matsim.core.config.ConfigUtils
 import org.matsim.core.population.io.PopulationReader
@@ -39,82 +41,104 @@ class EventsFileSpec
   }
 
   // TODO: probably test needs to be updated due to update in rideHailManager
-  ignore should "contain all bus routes" in {
+  it should "contain all bus routes" in {
+
     val listTrips =
       getListIDsWithTag(new File("test/input/beamville/r5/bus/trips.txt"), "route_id", 2).sorted
-    val listValueTagEventFile = new ReadEventsBeam()
-      .getListTagsFromFile(
-        getEventsFilePath(matsimConfig, "xml"),
-        Some("vehicle_type", "bus"),
-        "vehicle"
-      )
-      .groupBy(identity)
-    listValueTagEventFile.size shouldBe listTrips.size
+
+    val reader = new ReadEventsBeam()
+    val events = reader.readEvents(getEventsFilePath(matsimConfig, "xml").getAbsolutePath)
+
+    val transitDriverAgentBusEvents = events.filter{ e =>
+      PersonEntersVehicleEvent.EVENT_TYPE.equals(e.getEventType) &&
+      Option(e.getAttributes.get("person")).exists(_.contains("TransitDriverAgent-bus:"))
+    }
+    transitDriverAgentBusEvents.size shouldEqual listTrips.size
   }
 
-  it should "contain all train routes" ignore {
+  it should "contain all train routes" in {
     val listTrips =
       getListIDsWithTag(new File("test/input/beamville/r5/train/trips.txt"), "route_id", 2).sorted
-    val listValueTagEventFile = new ReadEventsBeam()
-      .getListTagsFromFile(
-        getEventsFilePath(matsimConfig, "xml"),
-        Some("vehicle_type", "subway"),
-        "vehicle"
-      )
-      .groupBy(identity)
-    listValueTagEventFile.size shouldBe listTrips.size
+
+    val reader = new ReadEventsBeam()
+    val events = reader.readEvents(getEventsFilePath(matsimConfig, "xml").getAbsolutePath)
+
+    val transitDriverAgentTrainEvents = events.filter{ e =>
+      PersonEntersVehicleEvent.EVENT_TYPE.equals(e.getEventType) &&
+        Option(e.getAttributes.get("person")).exists(_.contains("TransitDriverAgent-train:"))
+    }
+
+    transitDriverAgentTrainEvents.size shouldEqual listTrips.size
   }
 
-  ignore should "contain the same bus trips entries" in {
+  it should "contain the same bus trips entries" in {
     val listTrips =
       getListIDsWithTag(new File("test/input/beamville/r5/bus/trips.txt"), "route_id", 2).sorted
-    val listValueTagEventFile = new ReadEventsBeam()
-      .getListTagsFromFile(
-        getEventsFilePath(matsimConfig, "xml"),
-        Some("vehicle_type", "bus"),
-        "vehicle"
-      )
-      .groupBy(identity)
-      .keys
-      .toSeq
-    val listTripsEventFile = listValueTagEventFile.map(e => e.split(":")(1)).sorted
-    listTripsEventFile shouldBe listTrips
+
+    val reader = new ReadEventsBeam()
+    val events = reader.readEvents(getEventsFilePath(matsimConfig, "xml").getAbsolutePath)
+
+    val transitDriverAgentBusEvents = events.filter{ e =>
+      PersonEntersVehicleEvent.EVENT_TYPE.equals(e.getEventType) &&
+        Option(e.getAttributes.get("person")).exists(_.contains("TransitDriverAgent-bus:"))
+    }
+
+    val vehicles = transitDriverAgentBusEvents.map{ e =>
+      e.getAttributes
+        .get("vehicle")
+        .split(":")(1)
+    }.sorted
+
+    vehicles shouldBe listTrips
   }
 
-  it should "contain the same train trips entries" ignore {
+  it should "contain the same train trips entries" in {
     val listTrips =
       getListIDsWithTag(new File("test/input/beamville/r5/train/trips.txt"), "route_id", 2).sorted
-    val listValueTagEventFile = new ReadEventsBeam()
-      .getListTagsFromFile(
-        getEventsFilePath(matsimConfig, "xml"),
-        Some("vehicle_type", "subway"),
-        "vehicle"
-      )
-      .groupBy(identity)
-      .keys
-      .toSeq
-    val listTripsEventFile = listValueTagEventFile.map(e => e.split(":")(1)).sorted
-    listTripsEventFile shouldBe listTrips
+
+    val reader = new ReadEventsBeam()
+    val events = reader.readEvents(getEventsFilePath(matsimConfig, "xml").getAbsolutePath)
+
+    val transitDriverAgentBusEvents = events.filter{ e =>
+      PersonEntersVehicleEvent.EVENT_TYPE.equals(e.getEventType) &&
+        Option(e.getAttributes.get("person")).exists(_.contains("TransitDriverAgent-train:"))
+    }
+
+    val vehicles = transitDriverAgentBusEvents.map{ e =>
+      e.getAttributes
+        .get("vehicle")
+        .split(":")(1)
+    }.sorted
+
+    vehicles shouldBe listTrips
   }
 
-  ignore should "contain same pathTraversal defined at stop times file for bus input file" in {
+  it should "contain same pathTraversal defined at stop times file for bus input file" in {
     val listTrips =
       getListIDsWithTag(new File("test/input/beamville/r5/bus/stop_times.txt"), "trip_id", 0).sorted
     val grouped = listTrips.groupBy(identity)
     val groupedWithCount = grouped.map { case (k, v) => (k, v.size - 1) }
-    val listValueTagEventFile = new ReadEventsBeam().getListTagsFromFile(
-      getEventsFilePath(matsimConfig, "xml"),
-      Some("vehicle_type", "bus"),
-      "vehicle",
-      Some("PathTraversal")
-    )
-    val listTripsEventFile = listValueTagEventFile.map(e => e.split(":")(1))
-    val groupedXml = listTripsEventFile.groupBy(identity)
+
+    val reader = new ReadEventsBeam()
+    val events = reader.readEvents(getEventsFilePath(matsimConfig, "xml").getAbsolutePath)
+
+    val transitDriverAgentBusEvents = events.filter{ e =>
+      PathTraversalEvent.EVENT_TYPE.equals(e.getEventType) &&
+        Option(e.getAttributes.get("vehicle")).exists(_.contains("bus:"))
+    }
+    val vehicles = transitDriverAgentBusEvents.map{ e =>
+      e.getAttributes
+        .get("vehicle")
+        .split(":")(1)
+    }.sorted
+
+    val groupedXml = vehicles.groupBy(identity)
     val groupedXmlWithCount = groupedXml.map { case (k, v) => (k, v.size) }
+
     groupedXmlWithCount should contain theSameElementsAs groupedWithCount
   }
 
-  it should "contain same pathTraversal defined at stop times file for train input file" ignore {
+  it should "contain same pathTraversal defined at stop times file for train input file" in {
     val listTrips = getListIDsWithTag(
       new File("test/input/beamville/r5/train/stop_times.txt"),
       "trip_id",
@@ -122,23 +146,31 @@ class EventsFileSpec
     ).sorted
     val grouped = listTrips.groupBy(identity)
     val groupedWithCount = grouped.map { case (k, v) => (k, v.size - 1) }
-    val listValueTagEventFile = new ReadEventsBeam().getListTagsFromFile(
-      getEventsFilePath(matsimConfig, "xml"),
-      Some("vehicle_type", "subway"),
-      "vehicle",
-      Some("PathTraversal")
-    )
-    val listTripsEventFile = listValueTagEventFile.map(e => e.split(":")(1)).sorted
-    val groupedXml = listTripsEventFile.groupBy(identity)
+
+    val reader = new ReadEventsBeam()
+    val events = reader.readEvents(getEventsFilePath(matsimConfig, "xml").getAbsolutePath)
+
+    val transitDriverAgentBusEvents = events.filter{ e =>
+      PathTraversalEvent.EVENT_TYPE.equals(e.getEventType) &&
+        Option(e.getAttributes.get("vehicle")).exists(_.contains("train:"))
+    }
+    val vehicles = transitDriverAgentBusEvents.map{ e =>
+      e.getAttributes
+        .get("vehicle")
+        .split(":")(1)
+    }.sorted
+
+    val groupedXml = vehicles.groupBy(identity)
     val groupedXmlWithCount = groupedXml.map { case (k, v) => (k, v.size) }
+
     groupedXmlWithCount should contain theSameElementsAs groupedWithCount
   }
 
-  it should "also be available as csv file" in {
+  it should "be available as csv file" in {
     assert(getEventsFilePath(matsimConfig, "csv").exists())
   }
 
-  it should "also produce experienced plans which make sense" in {
+  it should "produce experienced plans which make sense" in {
     val scenario = ScenarioUtils.createScenario(ConfigUtils.createConfig())
     new PopulationReader(scenario).readFile(
       s"${matsimConfig.controler().getOutputDirectory}/ITERS/it.0/0.experienced_plans.xml.gz"
