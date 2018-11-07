@@ -520,7 +520,7 @@ def jfrWithMem = ["-XX:+UnlockCommercialFeatures", "-XX:+UnlockDiagnosticVMOptio
 
 // UseParallelGC
 applicationDefaultJvmArgs = ["-Xmx${myAvailableRam}g", "-Xms${myAvailableRam/2}g",
-                             "-XX:+UseParallelGC", "-XX:+UseParallelOldGC", "-XX:MetaspaceSize=500M"] + logGC + jfrWithMem
+                             "-XX:+UseParallelGC", "-XX:+UseParallelOldGC", "-XX:MetaspaceSize=500M"]
 
 println(applicationDefaultJvmArgs)
 
