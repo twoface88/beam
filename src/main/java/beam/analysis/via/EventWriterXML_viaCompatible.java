@@ -1,7 +1,6 @@
 package beam.analysis.via;
 
 
-import beam.utils.DebugLib;
 import org.matsim.api.core.v01.events.Event;
 import org.matsim.core.events.algorithms.EventWriter;
 import org.matsim.core.events.handler.BasicEventHandler;
@@ -26,8 +25,10 @@ public class EventWriterXML_viaCompatible implements EventWriter, BasicEventHand
     private boolean eventsForFullVersionOfVia;
     HashMap<String, HashSet<String>> filterPeopleForViaDemo = new HashMap<>();
     HashMap<String, Integer> maxPeopleForViaDemo = new HashMap<>();
+    private String outFileName;
 
     public EventWriterXML_viaCompatible(final String outFileName, boolean eventsForFullVersionOfVia) {
+        this.outFileName = outFileName;
         this.out = IOUtils.getBufferedWriter(outFileName);
         this.eventsForFullVersionOfVia = eventsForFullVersionOfVia;
 
