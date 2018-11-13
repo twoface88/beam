@@ -74,7 +74,7 @@ if (project.hasProperty('env')) {
 allprojects {
     repositories {
         maven { url 'http://download.osgeo.org/webdav/geotools/' }
-        maven { url "http://maven.geotoolkit.org/" }
+       // maven { url "http://maven.geotoolkit.org/" }
         maven { url "https://repository.jboss.org/nexus/content/repositories/thirdparty-releases" }
         maven { url "http://central.maven.org/maven2" }
         maven { url "http://repo.maven.apache.org/maven2" }
@@ -98,7 +98,7 @@ allprojects {
 dependencies {
 
     //beam-utilities
-    compile group: 'com.github.LBNL-UCB-STI', name: 'beam-utilities', version: '-SNAPSHOT'
+    compile group: 'com.github.LBNL-UCB-STI', name: 'beam-utilities', version: 'v0.1'
     ////////////////////////////
     // Java dependencies
     ////////////////////////////
@@ -199,7 +199,10 @@ dependencies {
     compile group: 'io.circe', name: "circe-parser_${scalaBinaryVersion}", version: circeBinaryVersion
 
     compile group: 'com.typesafe.play', name: "play-json_${scalaBinaryVersion}", version: '2.6.3'
-    compile group: 'com.github.romix.akka', name: "akka-kryo-serialization_${scalaBinaryVersion}", version: '0.5.2'
+    compile (group: 'com.github.romix.akka', name: "akka-kryo-serialization_${scalaBinaryVersion}", version: '0.5.2') {
+        exclude group: 'com.esotericsoftware', module: 'kryo'
+    }
+    compile group: 'com.esotericsoftware', name: 'kryo', version: '4.0.2'
 
     ////////////////////////////////////
     ///Performance Monitoring (Kamon)///
@@ -518,12 +521,20 @@ def getCurrentTimestamp = {
 def logGC = ["-XX:+PrintGCDetails", "-XX:+PrintGCDateStamps", "-Xloggc:gc_${getCurrentTimestamp()}.log"]
 
 // Use following for remote debug mode
-//applicationDefaultJvmArgs = ["-Xmx${myAvailableRam}","-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8005"]
-//applicationDefaultJvmArgs = ["-Xmx140g"] + logGC
+def remoteDebug = ["-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8005"]
+
+def jfr = ["-XX:+UnlockCommercialFeatures", "-XX:+FlightRecorder",
+           "-XX:FlightRecorderOptions=defaultrecording=true,disk=true,maxage=10h,dumponexit=true,loglevel=info"]
+
+// On the running machine there should be file /usr/lib/jvm/java-8-oracle/jre/lib/jfr/profile_heap_exception.jfc  with content from
+// https://pastebin.com/N3uuUfPz - it's Java Mission Control with metrics about heap allocation and details about exceptions
+def jfrWithMem = ["-XX:+UnlockCommercialFeatures", "-XX:+UnlockDiagnosticVMOptions", "-XX:+DebugNonSafepoints",
+                  "-XX:StartFlightRecording=delay=2s,duration=60m,name=mem_ex,filename=recording.jfr,settings=profile_heap_exception",
+                  "-XX:+FlightRecorder", "-XX:FlightRecorderOptions=disk=true,maxage=10h,dumponexit=true,loglevel=info"]
 
 // UseParallelGC
-applicationDefaultJvmArgs = ["-Xmx${myAvailableRam}g", "-Xms${myAvailableRam / 2}g",
-                             "-XX:+UseParallelGC", "-XX:+UseParallelOldGC", "-XX:MetaspaceSize=500M"] + logGC
+applicationDefaultJvmArgs = ["-Xmx${myAvailableRam}g", "-Xms${myAvailableRam/2}g",
+                             "-XX:+UseParallelGC", "-XX:+UseParallelOldGC", "-XX:MetaspaceSize=150M"] + logGC
 
 println(applicationDefaultJvmArgs)
 
