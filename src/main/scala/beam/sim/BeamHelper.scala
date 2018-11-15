@@ -11,6 +11,7 @@ import beam.replanning._
 import beam.replanning.utilitybased.UtilityBasedModeChoice
 import beam.router.r5.NetworkCoordinator
 import beam.scoring.BeamScoringFunctionFactory
+import beam.sim.config.BeamConfig.Matsim.Modules.Households
 import beam.sim.config.{BeamConfig, ConfigModule, MatSimBeamConfigBuilder}
 import beam.sim.metrics.Metrics._
 import beam.sim.modules.{BeamAgentModule, UtilsModule}
@@ -34,7 +35,7 @@ import org.matsim.core.controler._
 import org.matsim.core.controler.corelisteners.{ControlerDefaultCoreListenersModule, EventsHandling}
 import org.matsim.core.scenario.{MutableScenario, ScenarioByInstanceModule, ScenarioUtils}
 import org.matsim.core.trafficmonitoring.TravelTimeCalculator
-import org.matsim.households.Household
+import org.matsim.households.{Household, HouseholdsFactoryImpl, HouseholdsImpl}
 import org.matsim.utils.objectattributes.AttributeConverter
 import org.matsim.vehicles.Vehicle
 
@@ -374,8 +375,20 @@ trait BeamHelper extends LazyLogging {
     if(beamConfig.beam.agentsim.agents.population.beamPopulationFile != null && !beamConfig.beam.agentsim.agents.population.beamPopulationFile.isEmpty()) {
 
       val planReaderCsv: PlanReaderCsv = new PlanReaderCsv()
+      planReaderCsv.readGzipScenario()
+
       val population = planReaderCsv.readPlansFromCSV(beamConfig.beam.agentsim.agents.population.beamPopulationFile)
       scenario.setPopulation(population)
+
+      for(h: Household <- planReaderCsv.getHouseHoldsList){
+
+        scenario.getHouseholds.getHouseholds.put(h.getId, h)
+      }
+
+      for(v: Vehicle <- planReaderCsv.getAllVehicles){
+
+        scenario.getVehicles.addVehicle(v)
+      }
 
       if(beamConfig.matsim.modules.plans.inputPlansFile != null && !beamConfig.matsim.modules.plans.inputPlansFile.isEmpty()){
         logger.warn("The config file has specified two plans file as input: beam.agentsim.agents.population.beamPopulationFile and matsim.modules.plans.inputPlansFile. The beamPopulationFile will be used, unset the beamPopulationFile if you would rather use the inputPlansFile, or unset the inputPlansFile to avoid this warning.")

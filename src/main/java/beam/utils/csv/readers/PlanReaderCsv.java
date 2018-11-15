@@ -10,6 +10,10 @@ import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.population.PersonUtils;
 import org.matsim.core.population.PopulationUtils;
 import org.matsim.households.*;
+import org.matsim.vehicles.Vehicle;
+import org.matsim.vehicles.VehicleType;
+import org.matsim.vehicles.VehicleTypeImpl;
+import org.matsim.vehicles.VehicleUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -277,35 +281,53 @@ public class PlanReaderCsv {
 
     Map<String, List<Id<Person>>> houseHoldPersons = new HashMap<>();
 
+
+    private List<Id<Vehicle>> buildVehicles(int numberOfVehicles){
+
+
+        List<Id<Vehicle>> vehicles = new ArrayList<>();
+
+        for(int i=0; i< numberOfVehicles; i++){
+
+            int vehicleId = vehicleCounter + 1;
+            Id<Vehicle> vid = Id.createVehicleId(vehicleId);
+
+            VehicleType vehicleType = new VehicleTypeImpl(Id.create(1, VehicleType.class));
+
+            vehicles.add(vid);
+            allVehicles.add(VehicleUtils.getFactory().createVehicle(vid, vehicleType));
+        }
+
+
+        return vehicles;
+    }
+
+    private List<Id<Person>> buildPersons(int numberOfPersons){
+
+        List<Id<Person>> persons = new ArrayList<>();
+
+        for(int i=0; i< numberOfPersons; i++){
+
+            int personId = personCounter + 1;
+            Id<Person> pid = Id.createPersonId(personId);
+            Person person = population.getFactory().createPerson(pid);
+
+            persons.add(pid);
+            allPersons.add(person);
+        }
+
+
+        return persons;
+    }
+
     private void processData(){
 
-        if(population == null) {
-            population = PopulationUtils.createPopulation(ConfigUtils.createConfig());
-        }
-
-        for(String personId : persons.keySet()){
-
-            Map<String, String> person = persons.get(personId);
-            person.get("id");
-            Id<Person> _personId = Id.createPersonId(personId);
-            Person objPerson = PopulationUtils.getFactory().createPerson(_personId);
-
-            String houseHoldId = person.get("household_id");
-
-            List<Id<Person>> persons = houseHoldPersons.get(houseHoldId);
-
-            if(persons == null){
-                persons = new ArrayList<>();
-            }
-
-            persons.add(_personId);
-
-        }
 
         for(String houseHoldId : houseHolds.keySet()){
 
-            Map<String, String> houseHold = houseHolds.get(houseHoldId);
-            String houseHoldUnitId = houseHold.get("unit_id");
+            Map<String, String> houseHoldMap = houseHolds.get(houseHoldId);
+
+            String houseHoldUnitId = houseHoldMap.get("unit_id");
             Map<String, String> unit = units.get(houseHoldUnitId);
 
             String buildingId = unit.get("building_id");
@@ -315,20 +337,59 @@ public class PlanReaderCsv {
             String x = parcel.get("x");
             String y = parcel.get("y");
 
-            String hhId = houseHold.get("household_id");
+            String hhId = houseHoldMap.get("household_id");
+            Integer numberOfVehicles = Integer.parseInt(houseHoldMap.get("cars"));
+            Integer numberOfPersons = Integer.parseInt(houseHoldMap.get("person"));
+
             Id<Household> _houseHoldId = Id.create(hhId, Household.class);
-            Household objHouseHold = new HouseholdsFactoryImpl().createHousehold(_houseHoldId);
+            HouseholdImpl objHouseHold = new HouseholdsFactoryImpl().createHousehold(_houseHoldId);
+
+            List<Id<Vehicle>> vehicleIds = buildVehicles(numberOfVehicles);
+            List<Id<Person>> personIds = buildPersons(numberOfPersons);
+
+            Double _income = Double.parseDouble(houseHoldMap.get("income"));
+
+            Income income = new IncomeImpl(_income, Income.IncomePeriod.year);
+            objHouseHold.setVehicleIds(vehicleIds);
+            objHouseHold.setMemberIds(personIds);
+            objHouseHold.setIncome(income);
+
+            houseHoldsList.add(objHouseHold);
+
+            // PopulationImpl to set households
+            // I have to check in Matsim
+            /*
+            Population will have
+            plans, households, household will have persons and vehicles right
+            create default car based on the number in the cars column in the households.csv file
 
 
-            List<Id<Person>> personIds = houseHoldPersons.get(hhId);
-            ((HouseholdImpl) objHouseHold).setMemberIds(personIds);
-
-            System.out.println("HouseHoldId -> " + houseHold.get("household_id") + ", x -> " + x + ", y -> " + y);
+             */
 
         }
 
 
 
     }
+
+
+    public List<Person> getAllPersons() {
+        return allPersons;
+    }
+
+    public List<Vehicle> getAllVehicles() {
+        return allVehicles;
+    }
+
+    public List<Household> getHouseHoldsList() {
+        return houseHoldsList;
+    }
+
+    List<Household> houseHoldsList = new ArrayList<>();
+
+    List<Vehicle> allVehicles;
+    List<Person> allPersons;
+    int vehicleCounter = 0;
+    int personCounter = 0;
 }
 
