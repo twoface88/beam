@@ -1,6 +1,6 @@
 package beam.integration
 
-import java.io.File
+import java.io.{File, InputStream}
 
 import org.matsim.api.core.v01.events.Event
 import org.matsim.core.config.Config
@@ -15,6 +15,16 @@ trait EventsFileHandlingCommon {
   def getListIDsWithTag(file: File, tagIgnore: String, positionID: Int): List[String] = {
     var listResult = List[String]()
     for (line <- Source.fromFile(file.getPath).getLines) {
+      if (!line.startsWith(tagIgnore)) {
+        listResult = line.split(",")(positionID) :: listResult
+      }
+    }
+    listResult
+  }
+
+  def getListIDsWithTag(fileIs: InputStream, tagIgnore: String, positionID: Int): List[String] = {
+    var listResult = List[String]()
+    for (line <- Source.fromInputStream(fileIs).getLines) {
       if (!line.startsWith(tagIgnore)) {
         listResult = line.split(",")(positionID) :: listResult
       }

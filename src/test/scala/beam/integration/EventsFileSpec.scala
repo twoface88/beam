@@ -1,6 +1,7 @@
 package beam.integration
 
 import java.io.File
+import java.util.zip.ZipFile
 
 import beam.agentsim.events.PathTraversalEvent
 import beam.sim.BeamHelper
@@ -43,8 +44,10 @@ class EventsFileSpec
   // TODO: probably test needs to be updated due to update in rideHailManager
   it should "contain all bus routes" in {
 
+    val zipFile = new ZipFile("test/input/beamville/r5/bus.zip")
+    val tripsEntry = zipFile.getInputStream(zipFile.getEntry("trips.txt"))
     val listTrips =
-      getListIDsWithTag(new File("test/input/beamville/r5/bus/trips.txt"), "route_id", 2).sorted
+      getListIDsWithTag(tripsEntry, "route_id", 2).sorted
 
     val reader = new ReadEventsBeam()
     val events = reader.readEvents(getEventsFilePath(matsimConfig, "xml").getAbsolutePath)
@@ -57,8 +60,12 @@ class EventsFileSpec
   }
 
   it should "contain all train routes" in {
+
+    val zipFile = new ZipFile("test/input/beamville/r5/train.zip")
+    val tripsEntry = zipFile.getInputStream(zipFile.getEntry("trips.txt"))
+
     val listTrips =
-      getListIDsWithTag(new File("test/input/beamville/r5/train/trips.txt"), "route_id", 2).sorted
+      getListIDsWithTag(tripsEntry, "route_id", 2).sorted
 
     val reader = new ReadEventsBeam()
     val events = reader.readEvents(getEventsFilePath(matsimConfig, "xml").getAbsolutePath)
@@ -68,12 +75,22 @@ class EventsFileSpec
         Option(e.getAttributes.get("person")).exists(_.contains("TransitDriverAgent-train:"))
     }
 
-    transitDriverAgentTrainEvents.size shouldEqual listTrips.size
+    val trainVehiclesFromEvent = transitDriverAgentTrainEvents.map{ e =>
+      e.getAttributes.get("vehicle")
+    }
+
+    listTrips.forall(e => trainVehiclesFromEvent.exists(_.contains(e))) shouldBe true
+
+//    transitDriverAgentTrainEvents.size shouldEqual listTrips.size
   }
 
   it should "contain the same bus trips entries" in {
+
+    val zipFile = new ZipFile("test/input/beamville/r5/bus.zip")
+    val tripsEntry = zipFile.getInputStream(zipFile.getEntry("trips.txt"))
+
     val listTrips =
-      getListIDsWithTag(new File("test/input/beamville/r5/bus/trips.txt"), "route_id", 2).sorted
+      getListIDsWithTag(tripsEntry, "route_id", 2).sorted
 
     val reader = new ReadEventsBeam()
     val events = reader.readEvents(getEventsFilePath(matsimConfig, "xml").getAbsolutePath)
@@ -93,8 +110,11 @@ class EventsFileSpec
   }
 
   it should "contain the same train trips entries" in {
+    val zipFile = new ZipFile("test/input/beamville/r5/train.zip")
+    val tripsEntry = zipFile.getInputStream(zipFile.getEntry("trips.txt"))
+
     val listTrips =
-      getListIDsWithTag(new File("test/input/beamville/r5/train/trips.txt"), "route_id", 2).sorted
+      getListIDsWithTag(tripsEntry, "route_id", 2).sorted
 
     val reader = new ReadEventsBeam()
     val events = reader.readEvents(getEventsFilePath(matsimConfig, "xml").getAbsolutePath)
@@ -110,12 +130,18 @@ class EventsFileSpec
         .split(":")(1)
     }.sorted
 
-    vehicles shouldBe listTrips
+    listTrips.forall(s => vehicles.exists(_.contains(s)))
+
+//    vehicles shouldBe listTrips
   }
 
   it should "contain same pathTraversal defined at stop times file for bus input file" in {
+
+    val zipFile = new ZipFile("test/input/beamville/r5/bus.zip")
+    val tripsEntry = zipFile.getInputStream(zipFile.getEntry("stop_times.txt"))
     val listTrips =
-      getListIDsWithTag(new File("test/input/beamville/r5/bus/stop_times.txt"), "trip_id", 0).sorted
+      getListIDsWithTag(tripsEntry, "trip_id", 0).sorted
+
     val grouped = listTrips.groupBy(identity)
     val groupedWithCount = grouped.map { case (k, v) => (k, v.size - 1) }
 
@@ -139,8 +165,11 @@ class EventsFileSpec
   }
 
   it should "contain same pathTraversal defined at stop times file for train input file" in {
+
+    val zipFile = new ZipFile("test/input/beamville/r5/train.zip")
+    val tripsEntry = zipFile.getInputStream(zipFile.getEntry("stop_times.txt"))
     val listTrips = getListIDsWithTag(
-      new File("test/input/beamville/r5/train/stop_times.txt"),
+      tripsEntry,
       "trip_id",
       0
     ).sorted
