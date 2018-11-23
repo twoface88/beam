@@ -7,8 +7,8 @@ import org.scalatest.{Matchers, WordSpecLike}
 
 class RideHailNumDriversSpec extends WordSpecLike with Matchers with BeamHelper with IntegrationSpecCommon {
 
-  "Running beam with modeChoice ModeChoiceRideHailIfAvailable and increasing defaultCostPerMinute value" must {
-    "create less entries for mode choice rideHail as value increases" ignore {
+  "Running beam with modeChoice ModeChoiceRideHailIfAvailable and increasing numDriversAsFractionOfPopulation value" must {
+    "create more entries for mode choice rideHail as value increases" in {
       val numDriversAsFractionOfPopulation = Seq(0.1, 1.0)
       val modeChoice = numDriversAsFractionOfPopulation.map(
         tc =>
@@ -17,8 +17,8 @@ class RideHailNumDriversSpec extends WordSpecLike with Matchers with BeamHelper 
               .withValue(
                 TestConstants.KEY_AGENT_MODAL_BEHAVIORS_MODE_CHOICE_CLASS,
                 ConfigValueFactory.fromAnyRef("ModeChoiceRideHailIfAvailable")
-              )
-              .withValue(
+                )
+                .withValue(
                 "beam.agentsim.agents.rideHail.numDriversAsFractionOfPopulation",
                 ConfigValueFactory.fromAnyRef(tc)
               )
@@ -33,7 +33,7 @@ class RideHailNumDriversSpec extends WordSpecLike with Matchers with BeamHelper 
       val modeChoiceWithLowFraction = tc.head
       val modeChoiceWithHighFraction = tc.last
 
-      modeChoiceWithHighFraction should be < modeChoiceWithLowFraction
+      modeChoiceWithLowFraction should be < modeChoiceWithHighFraction
 
     }
   }
