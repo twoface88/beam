@@ -4,6 +4,7 @@ import java.io.File
 
 import beam.agentsim.agents.choice.mode.ModeSubsidy.Subsidy
 import beam.router.Modes.BeamMode
+import beam.sim.population.AttributesOfIndividual
 
 import scala.collection.mutable.ListBuffer
 import scala.io.Source
@@ -11,21 +12,31 @@ import scala.util.Try
 
 case class ModeSubsidy(modeSubsidies: Map[BeamMode, List[Subsidy]]) {
 
-  def getSubsidy(mode: BeamMode, age: Option[Int], income: Option[Int]): Double = {
+  def computeSubsidy(attributesOfIndividual: AttributesOfIndividual, mode: BeamMode): Double = {
+    val subsidy: Double =
+      // subsidy for non-public transport
+      getSubsidy(
+        mode,
+        attributesOfIndividual.age,
+        attributesOfIndividual.income.map(x => x.toInt)
+      ).getOrElse(0)
+
+    subsidy
+  }
+
+  def getSubsidy(mode: BeamMode, age: Option[Int], income: Option[Int]): Option[Double] = {
     modeSubsidies
       .getOrElse(mode, List())
-      .filter(
-        s =>
-          (age.fold(true)(s.age.hasOrEmpty) && income.fold(false)(s.income.hasOrEmpty)) ||
-          (age.fold(false)(s.age.hasOrEmpty) && income.fold(true)(s.income.hasOrEmpty))
-      )
+      .filter(s => age.fold(false)(s.age.hasOrEmpty) && income.fold(true)(s.income.hasOrEmpty))
       .map(_.amount)
-      .sum
+      .reduceOption(_ + _)
   }
 
 }
 
 object ModeSubsidy {
+
+  def apply(modeSubsidiesFile: String): ModeSubsidy = new ModeSubsidy(loadSubsidies(modeSubsidiesFile))
 
   def loadSubsidies(subsidiesFile: String): Map[BeamMode, List[Subsidy]] = {
     val subsidies: ListBuffer[Subsidy] = ListBuffer()
@@ -49,16 +60,4 @@ object ModeSubsidy {
       Try(amount.toDouble).getOrElse(0D)
     )
   }
-
-  def main(args: Array[String]): Unit = {
-    test()
-  }
-
-  def test(): Unit = {
-    val ms = new ModeSubsidy(loadSubsidies("test/input/beamville/subsidies.csv"))
-    assert(ms.getSubsidy(BeamMode.RIDE_HAIL, Some(5), Some(30000)) == 4)
-    assert(ms.getSubsidy(BeamMode.RIDE_HAIL, Some(25), Some(30000)) == 3)
-    assert(ms.getSubsidy(BeamMode.RIDE_HAIL, None, None) == 0)
-  }
-
 }
