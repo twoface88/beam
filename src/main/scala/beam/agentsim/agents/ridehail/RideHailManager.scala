@@ -180,10 +180,9 @@ object RideHailManager {
 
   /* Available means vehicle can be assigned to a new customer */
   case object Available extends RideHailServiceStatus
-
   case object InService extends RideHailServiceStatus
-
   case object OutOfService extends RideHailServiceStatus
+  case object VehicleNotFound extends RideHailServiceStatus
 
 }
 
@@ -759,6 +758,8 @@ class RideHailManager(
         inServiceRideHailVehicles(vehicleId)
       case OutOfService =>
         outOfServiceRideHailVehicles(vehicleId)
+      case VehicleNotFound =>
+        RideHailAgentLocation(ActorRef.noSender, vehicleId, SpaceTime.zero)
     }
   }
 
@@ -944,8 +945,8 @@ class RideHailManager(
     } else if (outOfServiceRideHailVehicles.contains(vehicleId)) {
       OutOfService
     } else {
-      log.error(s"Vehicle {} does not have a service status, assuming out of service", vehicleId)
-      OutOfService
+      log.error(s"Vehicle {} does not have a service status and is therefore unaccounted for", vehicleId)
+      VehicleNotFound
     }
   }
 
@@ -1006,6 +1007,14 @@ class RideHailManager(
             outOfServiceRideHailVehicles.put(newLocation.vehicleId, newLocation)
           case None =>
         }
+      case VehicleNotFound =>
+        val newLocation = RideHailAgentLocation(ActorRef.noSender, vehicleId, whenWhere)
+        outOfServiceRideHailAgentSpatialIndex.put(
+          newLocation.currentLocation.loc.getX,
+          newLocation.currentLocation.loc.getY,
+          newLocation
+        )
+        outOfServiceRideHailVehicles.put(newLocation.vehicleId, newLocation)
     }
   }
 
