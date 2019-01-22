@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 public class StatsFactory {
     public enum StatsType {
         RideHailWaiting,
-        RideHailingWaitingSingle,
+        RideHailWaitingTaz,
         ModeChosen,
         PersonVehicleTransition,
         PersonTravelTime,
@@ -29,7 +29,8 @@ public class StatsFactory {
         AgentDelay,
         AboveCapacityPtUsageDuration,
         TollRevenue,
-        AgencyRevenue
+        AgencyRevenue,
+        ParkingDelay
     }
 
     private final BeamConfig beamConfig;
@@ -74,8 +75,8 @@ public class StatsFactory {
         switch (statsType) {
             case RideHailWaiting:
                 return new RideHailWaitingAnalysis(new RideHailWaitingAnalysis.WaitingStatsComputation(), beamConfig);
-            case RideHailingWaitingSingle:
-                return new RideHailingWaitingSingleAnalysis(beamConfig, new RideHailingWaitingSingleAnalysis.RideHailingWaitingSingleComputation());
+            case RideHailWaitingTaz:
+                return new RideHailWaitingTazAnalysis(beamServices);
             case ModeChosen:
                 return new ModeChosenAnalysis(new ModeChosenAnalysis.ModeChosenComputation(), beamConfig);
             case PersonVehicleTransition:
@@ -104,6 +105,8 @@ public class StatsFactory {
                 return new TollRevenueAnalysis();
             case AgencyRevenue:
                 return new AgencyRevenueAnalysis();
+            case ParkingDelay:
+                return new ParkingStatsCollector(beamServices);
             default:
                 return null;
         }

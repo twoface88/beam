@@ -12,10 +12,9 @@ import beam.sim.BeamServices
 import beam.sim.common.GeoUtilsImpl
 import beam.sim.config.{BeamConfig, MatSimBeamConfigBuilder}
 import beam.sim.population.AttributesOfIndividual
-import com.google.inject.Injector
 import com.typesafe.config.ConfigValueFactory
-import org.matsim.api.core.v01.{Id, Scenario}
-import org.matsim.api.core.v01.population.{Person, Plan, PlanElement}
+import org.matsim.api.core.v01.Id
+import org.matsim.api.core.v01.population.{Person, Plan}
 import org.matsim.core.controler.ControlerI
 import org.matsim.core.scenario.{MutableScenario, ScenarioUtils}
 import org.matsim.households.Household
@@ -36,8 +35,6 @@ object ScenarioComparator extends App with Comparator[MutableScenario] {
 
   logScenario(xmlScenario)
   logScenario(csvScenario)
-  logBeamVehicles(b1)
-  logBeamVehicles(b2)
 
   val scenarioEquality = compare(xmlScenario, csvScenario)
   println("Scenarios are equal " + scenarioEquality)
@@ -46,22 +43,17 @@ object ScenarioComparator extends App with Comparator[MutableScenario] {
 
     var flag = 0
     var houseHoldsEqual = 0
-    var vehiclesEqual = 0
     var personsEqual = 0
     if (flag == 0 && HouseHoldComparator.compareHouseHolds(o1, o2) != 0)
       houseHoldsEqual = 1
-
-    if (flag == 0 && VehicleComparator.compareVehicles(b1, b2) != 0)
-      vehiclesEqual = 1
 
     if (flag == 0 && PersonComparator.comparePersons(o1, o2) != 0)
       personsEqual = 1
 
     println("HouseHolds are equal " + houseHoldsEqual)
-    println("Vehicles are equal " + vehiclesEqual)
     println("Persons are equal " + personsEqual)
 
-    if (houseHoldsEqual == 0 && personsEqual == 0 && vehiclesEqual == 0) flag = 0
+    if (houseHoldsEqual == 0 && personsEqual == 0) flag = 0
     else flag = 1
 
     flag
@@ -118,35 +110,40 @@ object ScenarioComparator extends App with Comparator[MutableScenario] {
         ZonedDateTime.parse(beamConfig.beam.routing.baseDate)
       )
       override var beamRouter: ActorRef = _
-      override val personRefs: TrieMap[Id[Person], ActorRef] = TrieMap()
-      override val vehicles: TrieMap[Id[BeamVehicle], BeamVehicle] = TrieMap()
       override var personHouseholds: Map[Id[Person], Household] = Map()
-      val fuelTypePrices: TrieMap[FuelType, Double] =
-        BeamServices.readFuelTypeFile(beamConfig.beam.agentsim.agents.vehicles.beamFuelTypesFile)
-      val vehicleTypes: TrieMap[Id[BeamVehicleType], BeamVehicleType] =
-        BeamServices.readBeamVehicleTypeFile(
-          beamConfig.beam.agentsim.agents.vehicles.beamVehicleTypesFile,
-          fuelTypePrices
-        )
-      val privateVehicles: TrieMap[Id[BeamVehicle], BeamVehicle] =
-        BeamServices.readVehiclesFile(beamConfig.beam.agentsim.agents.vehicles.beamVehiclesFile, vehicleTypes)
 
+      // TODO Fix me once `TrieMap` is removed
+      val fuelTypePrices: Map[FuelType, Double] =
+        BeamServices.readFuelTypeFile(beamConfig.beam.agentsim.agents.vehicles.beamFuelTypesFile).toMap
+
+      // TODO Fix me once `TrieMap` is removed
+      val vehicleTypes: TrieMap[Id[BeamVehicleType], BeamVehicleType] =
+        TrieMap(
+          BeamServices
+            .readBeamVehicleTypeFile(
+              beamConfig.beam.agentsim.agents.vehicles.beamVehicleTypesFile,
+              fuelTypePrices
+            )
+            .toSeq: _*
+        )
+
+      // TODO Fix me once `TrieMap` is removed
+      val privateVehicles: TrieMap[Id[BeamVehicle], BeamVehicle] =
+        TrieMap(
+          BeamServices
+            .readVehiclesFile(beamConfig.beam.agentsim.agents.vehicles.beamVehiclesFile, vehicleTypes)
+            .toSeq: _*
+        )
 
       override def startNewIteration(): Unit = throw new Exception("???")
 
-      override protected def injector: Injector = throw new Exception("???")
-
       override def matsimServices_=(x$1: org.matsim.core.controler.MatsimServices): Unit = ???
-
-      override def rideHailIterationHistoryActor_=(x$1: akka.actor.ActorRef): Unit = ???
 
       override val tazTreeMap: beam.agentsim.infrastructure.TAZTreeMap =
         beam.sim.BeamServices.getTazTreeMap(beamConfig.beam.agentsim.taz.file)
       override val modeIncentives: ModeIncentive = ???
 
       override def matsimServices: org.matsim.core.controler.MatsimServices = ???
-
-      override def rideHailIterationHistoryActor: akka.actor.ActorRef = ???
 
       override val rideHailTransitModes: Seq[Modes.BeamMode] = ???
       override val agencyAndRouteByVehicleIds: TrieMap[Id[Vehicle], (String, String)] = ???
@@ -156,7 +153,7 @@ object ScenarioComparator extends App with Comparator[MutableScenario] {
     beamServices
   }
 
-  def logScenario(scenario: MutableScenario) = {
+  def logScenario(scenario: MutableScenario): Unit = {
     println("Scenario is loaded " + scenario.toString)
 
     println("HouseHolds")
@@ -185,15 +182,6 @@ object ScenarioComparator extends App with Comparator[MutableScenario] {
       }
     }
     println("--")
-  }
-
-  def logBeamVehicles(beamServices: BeamServices) = {
-    println("BeamVehicles")
-    beamServices.vehicles.foreach {
-      case (vId: Id[BeamVehicle], v: BeamVehicle) => {
-        println("bvId => " + vId + ", bv => " + v.toString)
-      }
-    }
   }
 
 }
@@ -284,42 +272,9 @@ object HouseHoldComparator extends Comparator[Household] {
 object VehicleComparator extends Comparator[BeamVehicle] {
 
   override def compare(v1: BeamVehicle, v2: BeamVehicle): Int = {
-    if (v1.getId == v2.getId
-        && v1.houseHoldId.get.equals(v2.houseHoldId.get)
+    if (v1.id == v2.id
         && v1.beamVehicleType.equals(v2.beamVehicleType)) 0
     else 1
-  }
-
-  def compareVehicles(o1: BeamServices, o2: BeamServices): Int = {
-    var flag = 0
-
-    val vehicles1: TrieMap[Id[BeamVehicle], BeamVehicle] = o1.vehicles
-    val vehicles2 = o2.vehicles
-
-    if (flag == 0 && vehicles1.keySet.size != vehicles2.keySet.size) flag = 1
-
-    if (flag == 0) {
-
-      Breaks.breakable {
-        vehicles1.foreach {
-          case (vId1: Id[BeamVehicle], v: BeamVehicle) => {
-
-            /*val v1 = vehicles1.get(vId1)
-            val v2 = vehicles2.get(vId1)*/
-
-            VehicleComparator.compare(v, vehicles2.get(vId1).get) match {
-              case 1 => {
-                flag = 1
-                Breaks.break
-              }
-              case _ =>
-            }
-          }
-        }
-      }
-    }
-
-    flag
   }
 
 }

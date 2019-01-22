@@ -33,10 +33,10 @@ import scala.language.implicitConversions
 object Modes {
 
   sealed abstract class BeamMode(
-                                  val value: String,
-                                  val r5Mode: Option[Either[LegMode, TransitModes]],
-                                  val matsimMode: String
-                                ) extends StringEnumEntry {
+    val value: String,
+    val r5Mode: Option[Either[LegMode, TransitModes]],
+    val matsimMode: String
+  ) extends StringEnumEntry {
 
     def isTransit: Boolean = isR5TransitMode(this)
     def isMassTransit: Boolean = this == SUBWAY || this == RAIL || this == FERRY || this == TRAM
@@ -47,8 +47,6 @@ object Modes {
 
     override val values: immutable.IndexedSeq[BeamMode] = findValues
 
-    case object NO_MODE extends BeamMode(value = "no_mode", None, "")
-
     // Driving / Automobile-like (hailed rides are a bit of a hybrid)
 
     case object CAR extends BeamMode(value = "car", Some(Left(LegMode.CAR)), TransportMode.car)
@@ -56,7 +54,7 @@ object Modes {
     case object RIDE_HAIL extends BeamMode(value = "ride_hail", Some(Left(LegMode.CAR)), TransportMode.other)
 
     case object RIDE_HAIL_POOLED
-      extends BeamMode(value = "ride_hail_pooled", Some(Left(LegMode.CAR)), TransportMode.other)
+        extends BeamMode(value = "ride_hail_pooled", Some(Left(LegMode.CAR)), TransportMode.other)
 
     // Transit
 
@@ -88,25 +86,25 @@ object Modes {
     case object LEG_SWITCH extends BeamMode(value = "leg_switch", None, TransportMode.other) // This is kind-of like a transit walk, but not really... best to make leg_switch its own type
 
     case object WALK_TRANSIT
-      extends BeamMode(
-        value = "walk_transit",
-        Some(Right(TransitModes.TRANSIT)),
-        TransportMode.transit_walk
-      )
+        extends BeamMode(
+          value = "walk_transit",
+          Some(Right(TransitModes.TRANSIT)),
+          TransportMode.transit_walk
+        )
 
     case object DRIVE_TRANSIT
-      extends BeamMode(
-        value = "drive_transit",
-        Some(Right(TransitModes.TRANSIT)),
-        TransportMode.pt
-      )
+        extends BeamMode(
+          value = "drive_transit",
+          Some(Right(TransitModes.TRANSIT)),
+          TransportMode.pt
+        )
 
     case object RIDE_HAIL_TRANSIT
-      extends BeamMode(
-        value = "ride_hail_transit",
-        Some(Right(TransitModes.TRANSIT)),
-        TransportMode.pt
-      )
+        extends BeamMode(
+          value = "ride_hail_transit",
+          Some(Right(TransitModes.TRANSIT)),
+          TransportMode.pt
+        )
 
     case object WAITING extends BeamMode(value = "waiting", None, TransportMode.other)
 
@@ -114,20 +112,20 @@ object Modes {
 
     val transitModes =
       Seq(BUS, FUNICULAR, GONDOLA, CABLE_CAR, FERRY, TRAM, TRANSIT, RAIL, SUBWAY)
-    val allBeamModes: Seq[BeamMode] = Seq(CAR, RIDE_HAIL, BIKE) ++ transitModes
+    val allBeamModes: Seq[BeamMode] = Seq(CAR, RIDE_HAIL, RIDE_HAIL_TRANSIT, BIKE, WALK, WALK_TRANSIT) ++ transitModes
 
     val massTransitModes: List[BeamMode] = List(FERRY, TRANSIT, RAIL, SUBWAY, TRAM)
 
     val allModes: List[BeamMode] =
-      List(RIDE_HAIL, CAR, WALK, TRANSIT, RIDE_HAIL_TRANSIT, DRIVE_TRANSIT, WALK_TRANSIT)
+      List(RIDE_HAIL, CAR, WALK, TRANSIT, RIDE_HAIL_TRANSIT, DRIVE_TRANSIT, WALK_TRANSIT, BIKE)
 
-    def fromString(stringMode: String): BeamMode = {
+    def fromString(stringMode: String): Option[BeamMode] = {
       if (stringMode.equals("")) {
-        NO_MODE
-      } else if(stringMode.equalsIgnoreCase("drive")) {
-        CAR
+        None
+      } else if (stringMode.equalsIgnoreCase("drive")) {
+        Some(CAR)
       } else {
-        BeamMode.withValue(stringMode)
+        Some(BeamMode.withValue(stringMode))
       }
     }
   }

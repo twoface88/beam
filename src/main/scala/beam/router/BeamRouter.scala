@@ -21,8 +21,8 @@ import akka.cluster.ClusterEvent._
 import akka.cluster.{Cluster, Member, MemberStatus}
 import akka.pattern._
 import akka.util.Timeout
-import beam.agentsim.agents.vehicles.BeamVehicle
 import beam.agentsim.agents.vehicles.VehicleProtocol.StreetVehicle
+import beam.agentsim.agents.vehicles.{BeamVehicle, BeamVehicleType}
 import beam.agentsim.agents.{InitializeTrigger, TransitDriverAgent}
 import beam.agentsim.scheduler.BeamAgentScheduler.ScheduleTrigger
 import beam.router.BeamRouter._
@@ -32,9 +32,8 @@ import beam.router.model._
 import beam.router.osm.TollCalculator
 import beam.router.r5.R5RoutingWorker
 import beam.sim.BeamServices
-import beam.sim.metrics.MetricsPrinter
-import beam.sim.metrics.MetricsPrinter.Subscribe
 import beam.sim.population.AttributesOfIndividual
+import beam.utils.IdGeneratorImpl
 import com.conveyal.r5.profile.StreetMode
 import com.conveyal.r5.transit.{RouteInfo, TransportNetwork}
 import com.romix.akka.serialization.kryo.KryoSerializer
@@ -321,10 +320,10 @@ class BeamRouter(
         worker ! work
       case embodyWithCurrentTravelTime: EmbodyWithCurrentTravelTime =>
         outstandingWorkIdToOriginalSenderMap.put(
-          embodyWithCurrentTravelTime.id,
+          embodyWithCurrentTravelTime.requestId,
           originalSender
         )
-        outstandingWorkIdToTimeSent.put(embodyWithCurrentTravelTime.id, getCurrentTime)
+        outstandingWorkIdToTimeSent.put(embodyWithCurrentTravelTime.requestId, getCurrentTime)
         worker ! work
       case _ =>
         log.warning(
@@ -400,7 +399,6 @@ class BeamRouter(
     transits.foreach {
       case (tripVehId, (route, legs)) =>
         initializer.createTransitVehicle(tripVehId, route, legs).foreach { vehicle =>
-          services.vehicles += (tripVehId -> vehicle)
           services.agencyAndRouteByVehicleIds += (Id
             .createVehicleId(tripVehId.toString) -> (route.agency_id, route.route_id))
           val transitDriverId = TransitDriverAgent.createAgentIdFromVehicleId(tripVehId)
@@ -431,7 +429,8 @@ object BeamRouter {
   case class EmbodyWithCurrentTravelTime(
     leg: BeamLeg,
     vehicleId: Id[Vehicle],
-    id: Int = UUID.randomUUID().hashCode(),
+    vehicleTypeId: Id[BeamVehicleType],
+    requestId: Int = IdGeneratorImpl.nextId,
     mustParkAtEnd: Boolean = false,
     destinationForSplitting: Option[Coord] = None
   )
@@ -462,9 +461,9 @@ object BeamRouter {
     streetVehicles: IndexedSeq[StreetVehicle],
     attributesOfIndividual: Option[AttributesOfIndividual] = None,
     streetVehiclesUseIntermodalUse: IntermodalUse = Access,
-    mustParkAtEnd: Boolean = false
+    mustParkAtEnd: Boolean = false,
+    requestId: Int = IdGeneratorImpl.nextId
   ) {
-    lazy val requestId: Int = UUID.randomUUID().hashCode()
     lazy val timeValueOfMoney
       : Double = attributesOfIndividual.fold(360.0)(3600.0 / _.valueOfTime) // 360 seconds per Dollar, i.e. 10$/h value of travel time savings
   }
@@ -480,14 +479,12 @@ object BeamRouter {
     * @param itineraries a vector of planned routes
     */
   case class RoutingResponse(
-                              itineraries: Seq[EmbodiedBeamTrip],
-                              requestId: Int
-  ) {
-    lazy val responseId: Int = UUID.randomUUID().hashCode()
-  }
+    itineraries: Seq[EmbodiedBeamTrip],
+    requestId: Int
+  )
 
   object RoutingResponse {
-    val dummyRoutingResponse = Some(RoutingResponse(Vector(), java.util.UUID.randomUUID().hashCode()))
+    val dummyRoutingResponse = Some(RoutingResponse(Vector(), IdGeneratorImpl.nextId))
   }
 
   def props(
