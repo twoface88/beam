@@ -39,7 +39,6 @@ import com.conveyal.r5.streets._
 import com.conveyal.r5.transit.{RouteInfo, TransportNetwork}
 import com.google.common.cache.{CacheBuilder, CacheLoader}
 import com.google.common.util.concurrent.ThreadFactoryBuilder
-import com.google.inject.Injector
 import com.typesafe.config.Config
 import org.matsim.api.core.v01.network.{Link, Network}
 import org.matsim.api.core.v01.population.Person
@@ -52,7 +51,6 @@ import org.matsim.vehicles.{Vehicle, Vehicles}
 
 import scala.collection.JavaConverters._
 import scala.collection.concurrent.TrieMap
-import scala.collection.immutable.HashMap
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
@@ -219,13 +217,18 @@ class R5RoutingWorker(workerParams: WorkerParameters) extends Actor with ActorLo
 
   private val links = network.getLinks
 
-  private val linkIdMap: HashMap[Int, Link] = {
+  private val linkArr: Array[Link] = {
     val start = System.currentTimeMillis()
-    val pairs = links.asScala.map { case (k, v) => k.toString.toInt -> v }.toSeq
-    val map = HashMap(pairs: _*)
+    val sortedPairs = links.asScala.map { case (k, v) => k.toString.toInt -> v }.toSeq.sortBy { case (linkId, link) => linkId }
+    val maxLinkId = sortedPairs.maxBy(x => x._1)
+    log.info(s"MaxLinkId: $maxLinkId")
+    val arr = new Array[Link](maxLinkId._1 + 1)
+    sortedPairs.foreach { case (linkId, link) =>
+      arr(linkId) = link
+    }
     val end = System.currentTimeMillis()
-    log.info("linkIdMap is built in {} ms", end - start)
-    map
+    log.info(s"linkArr with size ${arr.length} is built in {} ms", end - start)
+    arr
   }
 
   private var transitSchedule: Map[Id[BeamVehicle], (RouteInfo, Seq[BeamLeg])] = transitMap
@@ -1077,7 +1080,7 @@ class R5RoutingWorker(workerParams: WorkerParameters) extends Actor with ActorLo
   }
 
   private def getTravelTime(time: Int, linkId: Int, travelTime: TravelTime): Double = {
-    val link = linkIdMap(linkId)
+    val link = linkArr(linkId)
     val tt = travelTime.getLinkTravelTime(link, time, null, null)
     val travelSpeed = link.getLength / tt
     if (travelSpeed < beamServices.beamConfig.beam.physsim.quick_fix_minCarSpeedInMetersPerSecond) {
