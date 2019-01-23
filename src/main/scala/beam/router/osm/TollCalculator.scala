@@ -21,26 +21,31 @@ import scala.io.Source
 class TollCalculator @Inject()(val config: BeamConfig) extends LazyLogging {
 
   private val tollsByLinkId: java.util.Map[Int, Array[Toll]] =
-    readTollPrices(config.beam.agentsim.toll.file)//.withDefaultValue(Vector())
+    readTollPrices(config.beam.agentsim.toll.file) //.withDefaultValue(Vector())
   private val tollsByWayId: java.util.Map[Int, Array[Toll]] = readFromCacheFileOrOSM() // .withDefaultValue(Vector())
 
   logger.info("tollsByLinkId size: {}", tollsByLinkId.size)
   logger.info("tollsByWayId size: {}", tollsByWayId.size)
 
-  def calcTollByOsmIds(osmIds: IndexedSeq[Long]): Double =
+  def calcTollByOsmIds(osmIds: IndexedSeq[Long]): Double = {
     if (osmIds.isEmpty || tollsByWayId.isEmpty) 0
     else {
-      var i = 0
-      var sum: Double = 0
-      while (i < osmIds.size) {
-        val toll = tollsByLinkId.get(osmIds(i))
-        if (toll != null) {
-          sum += applyTimeDependentTollAtTime(toll, 0)
-        }
-        i += 1
-      }
-      sum
+      osmIds.map(tollsByWayId.get)
+        .filter(toll => toll != null)
+        .map(toll => applyTimeDependentTollAtTime(toll, 0)).sum
+
+//      var i = 0
+//      var sum: Double = 0
+//      while (i < osmIds.size) {
+//        val toll = tollsByLinkId.get(osmIds(i))
+//        if (toll != null) {
+//          sum += applyTimeDependentTollAtTime(toll, 0)
+//        }
+//        i += 1
+//      }
+//      sum
     }
+  }
 
   def calcTollByLinkIds(path: BeamPath): Double = {
     val linkEnterTimes = path.linkTravelTime.scanLeft(path.startPoint.time)(_ + _)
@@ -58,14 +63,16 @@ class TollCalculator @Inject()(val config: BeamConfig) extends LazyLogging {
     }
   }
   private def applyTimeDependentTollAtTime(tolls: Array[Toll], time: Int): Double = {
-    var i: Int = 0
-    var total: Double = 0.0
-    while (i < tolls.length) {
-      val toll = tolls(i)
-      if (toll.timeRange.has(time)) total += toll.amount
-      i += 1
-    }
-    total
+    tolls.filter(toll => toll.timeRange.has(time)).map(toll => toll.amount).sum
+
+//    var i: Int = 0
+//    var total: Double = 0.0
+//    while (i < tolls.length) {
+//      val toll = tolls(i)
+//      if (toll.timeRange.has(time)) total += toll.amount
+//      i += 1
+//    }
+//    total
     // tolls.view.filter(toll => toll.timeRange.has(time)).map(toll => toll.amount).sum
   }
 
@@ -78,10 +85,12 @@ class TollCalculator @Inject()(val config: BeamConfig) extends LazyLogging {
         .toArray
         .map(_.split(","))
         .groupBy(t => t(0).toInt)
-        .map { case (linkId, lines) =>
-          val tollWithRange = lines.map(t => Toll(t(1).toDouble, Range(t(2))))
-          Maps.immutableEntry[Int, Array[Toll]](linkId, tollWithRange)
-        }.toArray
+        .map {
+          case (linkId, lines) =>
+            val tollWithRange = lines.map(t => Toll(t(1).toDouble, Range(t(2))))
+            Maps.immutableEntry[Int, Array[Toll]](linkId, tollWithRange)
+        }
+        .toArray
       MapUtils.putAll(new util.HashMap[Int, Array[Toll]](), rowList.asInstanceOf[Array[AnyRef]])
     } else {
       Collections.emptyMap()
@@ -122,7 +131,8 @@ class TollCalculator @Inject()(val config: BeamConfig) extends LazyLogging {
           val tolls = way.tags.asScala
             .find(_.key == "charge")
             .map(chargeTag => parseTolls(chargeTag.value))
-            .getOrElse(Nil).toArray
+            .getOrElse(Nil)
+            .toArray
           if (tolls.nonEmpty) Some(Maps.immutableEntry[Int, Array[Toll]](id.toInt, tolls)) else None
         case _ => None
       }.toArray
