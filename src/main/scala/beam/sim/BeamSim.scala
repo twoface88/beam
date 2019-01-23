@@ -19,8 +19,8 @@ import beam.router.gtfs.FareCalculator
 import beam.router.osm.TollCalculator
 import beam.sim.metrics.MetricsPrinter.{Print, Subscribe}
 import beam.sim.metrics.{MetricsPrinter, MetricsSupport}
-import beam.utils.DebugLib
 import beam.utils.scripts.{FailFast, PopulationWriterCSV}
+import beam.utils.{DebugLib, NetworkHelper}
 import com.conveyal.r5.transit.TransportNetwork
 import com.google.inject.Inject
 import com.typesafe.scalalogging.LazyLogging
@@ -47,6 +47,7 @@ class BeamSim @Inject()(
   private val beamServices: BeamServices,
   private val eventsManager: EventsManager,
   private val scenario: Scenario,
+  private val networkHelper: NetworkHelper,
   private val beamOutputDataDescriptionGenerator: BeamOutputDataDescriptionGenerator
 ) extends StartupListener
     with IterationEndsListener
@@ -134,9 +135,7 @@ class BeamSim @Inject()(
     delayMetricAnalysis = new DelayMetricAnalysis(
       eventsManager,
       event.getServices.getControlerIO,
-      beamServices,
-      scenario,
-      beamServices.beamConfig
+      networkHelper
     )
 
     // report inconsistencies in output:
