@@ -27,10 +27,19 @@ class TollCalculator @Inject()(val config: BeamConfig) extends LazyLogging {
   logger.info("tollsByLinkId size: {}", tollsByLinkId.size)
   logger.info("tollsByWayId size: {}", tollsByWayId.size)
 
-  def calcTollByOsmIds(osmIds: Seq[Long]): Double =
+  def calcTollByOsmIds(osmIds: IndexedSeq[Long]): Double =
     if (osmIds.isEmpty || tollsByWayId.isEmpty) 0
     else {
-      osmIds.map(tollsByWayId.get).map(toll => applyTimeDependentTollAtTime(toll, 0)).sum
+      var i = 0
+      var sum: Double = 0
+      while (i < osmIds.size) {
+        val toll = tollsByLinkId.get(osmIds(i))
+        if (toll != null) {
+          sum += applyTimeDependentTollAtTime(toll, 0)
+        }
+        i += 1
+      }
+      sum
     }
 
   def calcTollByLinkIds(path: BeamPath): Double = {
