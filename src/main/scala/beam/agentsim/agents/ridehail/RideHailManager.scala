@@ -303,7 +303,8 @@ class RideHailManager(
 
   private val rand = new Random(beamServices.beamConfig.matsim.modules.global.randomSeed)
   private val rideHailinitialLocationSpatialPlot = new SpatialPlot(1100, 1100, 50)
-  val quadTreeBounds: QuadTreeBounds = getQuadTreeBound(scenario.getPopulation)
+  val quadTreeBounds: QuadTreeBounds = ProfilingUtils.timed("getQuadTreeBound",
+    getQuadTreeBound(scenario.getPopulation), log.info)
   val resources: mutable.Map[Id[BeamVehicle], BeamVehicle] = mutable.Map[Id[BeamVehicle], BeamVehicle]()
 
   beamServices.beamConfig.beam.agentsim.agents.rideHail.initialization.initType match {
@@ -1082,10 +1083,13 @@ class RideHailManager(
       case activity: Activity =>
         activity
     }
-    val coordinates = activities.map(_.getCoord)
-    val xs = coordinates.map(_.getX)
-    val ys = coordinates.map(_.getY)
-    QuadTreeBounds(xs.min, ys.min, xs.max, ys.max)
+    // To force to create array
+    val coordinates = activities.map(_.getCoord).toArray
+    val xMin = coordinates.minBy(x => x.getX).getX
+    val xMax = coordinates.maxBy(x => x.getX).getX
+    val yMin = coordinates.minBy(x => x.getY).getY
+    val yMax = coordinates.maxBy(x => x.getY).getY
+    QuadTreeBounds(xMin, yMin, xMax, yMax)
   }
 
   def cleanUp = {
