@@ -2,8 +2,11 @@ package beam.integration
 
 import java.io.File
 
+import beam.agentsim.agents.planning.BeamPlan
+import beam.agentsim.events.PathTraversalEvent
 import beam.analysis.plots.TollRevenueAnalysis
 import beam.integration.ReadEvents._
+import beam.router.Modes.BeamMode.CAR
 import beam.sim.BeamHelper
 import com.typesafe.config.{Config, ConfigValueFactory}
 import org.matsim.api.core.v01.population.{Activity, Leg}
@@ -31,12 +34,12 @@ class EventsFileSpec extends FlatSpec with BeforeAndAfterAll with Matchers with 
 
   it should "contain the same bus trips entries" in {
     tripsFromEvents("BUS-DEFAULT") should contain theSameElementsAs
-    tripsFromGtfs(new File("test/input/beamville/r5/bus/trips.txt"))
+    tripsFromGtfs(new File("test/input/beamville/r5/bus-freq/trips.txt"))
   }
 
   it should "contain the same train trips entries" in {
     tripsFromEvents("SUBWAY-DEFAULT") should contain theSameElementsAs
-    tripsFromGtfs(new File("test/input/beamville/r5/train/trips.txt")) ++
+//    tripsFromGtfs(new File("test/input/beamville/r5/train/trips.txt"))
     tripsFromGtfs(new File("test/input/beamville/r5/train-freq/trips.txt"))
   }
 
@@ -56,22 +59,20 @@ class EventsFileSpec extends FlatSpec with BeforeAndAfterAll with Matchers with 
   }
 
   it should "contain same pathTraversal defined at stop times file for bus input file" in {
-    stopToStopLegsFromEventsByTrip("BUS-DEFAULT") should contain theSameElementsAs
-    stopToStopLegsFromGtfsByTrip("test/input/beamville/r5/bus/stop_times.txt")
+    stopToStopLegsFromEventsByTrip("BUS-DEFAULT").keys should contain theSameElementsAs
+    stopToStopLegsFromGtfsByTrip("test/input/beamville/r5/bus-freq/stop_times.txt").keys
   }
 
-  // FIXME: Adapt to frequency unrolling. :-(
-  it should "contain same pathTraversal defined at stop times file for train input file" ignore {
-    stopToStopLegsFromEventsByTrip("SUBWAY-DEFAULT") should contain theSameElementsAs
-    stopToStopLegsFromGtfsByTrip("test/input/beamville/r5/train/stop_times.txt") ++
-    stopToStopLegsFromGtfsByTrip("test/input/beamville/r5/train-freq/stop_times.txt")
+  it should "contain same pathTraversal defined at stop times file for train input file" in {
+    stopToStopLegsFromEventsByTrip("SUBWAY-DEFAULT").keys should contain theSameElementsAs
+    stopToStopLegsFromGtfsByTrip("test/input/beamville/r5/train-freq/stop_times.txt").keys
   }
 
   private def stopToStopLegsFromEventsByTrip(vehicleType: String) = {
     val pathTraversals = for {
       event <- fromFile(getEventsFilePath(matsimConfig, "xml").getAbsolutePath)
       if event.getEventType == "PathTraversal"
-      if event.getAttributes.get("vehicleType") == vehicleType
+      if event.getAttributes.get(PathTraversalEvent.ATTRIBUTE_VEHICLE_TYPE) == vehicleType
     } yield event
     val eventsByTrip =
       pathTraversals.groupBy(_.getAttributes.get("vehicle").split(":")(1).split("-").take(3).mkString("-"))
@@ -93,7 +94,7 @@ class EventsFileSpec extends FlatSpec with BeforeAndAfterAll with Matchers with 
     val tollEvents = for {
       event <- fromFile(getEventsFilePath(matsimConfig, "xml").getAbsolutePath)
       if event.getEventType == "PathTraversal"
-      if event.getAttributes.get("amountPaid").toDouble != 0.0
+      if event.getAttributes.get(PathTraversalEvent.ATTRIBUTE_TOLL_PAID).toDouble != 0.0
     } yield event
     tollEvents should not be empty
   }
@@ -102,7 +103,7 @@ class EventsFileSpec extends FlatSpec with BeforeAndAfterAll with Matchers with 
     val analysis = new TollRevenueAnalysis
     fromFile(getEventsFilePath(matsimConfig, "xml").getAbsolutePath)
       .foreach(analysis.processStats)
-    val tollRevenue = analysis.getSummaryStats.get("tollRevenue")
+    val tollRevenue = analysis.getSummaryStats.get(TollRevenueAnalysis.ATTRIBUTE_TOLL_REVENUE)
     tollRevenue should not equal 0.0
   }
 
@@ -120,9 +121,20 @@ class EventsFileSpec extends FlatSpec with BeforeAndAfterAll with Matchers with 
           assert(activity.getEndTime == leg.getDepartureTime)
         case Seq(leg: Leg, activity: Activity) =>
           assert(leg.getDepartureTime + leg.getTravelTime == activity.getStartTime)
-          if (leg.getMode == "car") {
+          if (leg.getMode == CAR.matsimMode) {
             assert(leg.getRoute.isInstanceOf[NetworkRoute])
           }
+      }
+      val beamPlan = BeamPlan(experiencedPlan)
+      beamPlan.tours.foreach { tour =>
+        if (tour.trips.size > 1) {
+          if (tour.trips.head.leg.get.getMode == "car") {
+            assert(
+              tour.trips.last.leg.get.getMode == "car",
+              "If I leave home by car, I must get home by car: " + person.getId
+            )
+          }
+        }
       }
     }
   }

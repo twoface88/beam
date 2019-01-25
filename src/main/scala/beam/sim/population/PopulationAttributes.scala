@@ -21,6 +21,10 @@ case class AttributesOfIndividual(
   lazy val hasModalityStyle: Boolean = modalityStyle.nonEmpty
 }
 
+object AttributesOfIndividual {
+  val EMPTY = AttributesOfIndividual(HouseholdAttributes.EMPTY, None, true, Seq(), 0.0, None, None)
+}
+
 case class HouseholdAttributes(
   householdIncome: Double,
   householdSize: Int,
@@ -40,10 +44,10 @@ object HouseholdAttributes {
       household.getMemberIds.size(),
       household.getVehicleIds.asScala
         .map(id => vehicles(id))
-        .count(_.beamVehicleType.vehicleTypeId.toLowerCase.contains("car")),
+        .count(_.beamVehicleType.id.toString.toLowerCase.contains("car")),
       household.getVehicleIds.asScala
         .map(id => vehicles(id))
-        .count(_.beamVehicleType.vehicleTypeId.toLowerCase.contains("bike"))
+        .count(_.beamVehicleType.id.toString.toLowerCase.contains("bike"))
     )
   }
 }

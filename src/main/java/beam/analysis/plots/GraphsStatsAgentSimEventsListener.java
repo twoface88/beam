@@ -10,12 +10,10 @@ import org.matsim.api.core.v01.events.Event;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.events.IterationEndsEvent;
-import org.matsim.core.controler.events.ShutdownEvent;
 import org.matsim.core.events.handler.BasicEventHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -54,7 +52,12 @@ public class GraphsStatsAgentSimEventsListener implements BasicEventHandler, Ite
                                              OutputDirectoryHierarchy controlerIO,
                                              BeamServices services, BeamConfig beamConfig) {
         this(services);
-        statsFactory.createStats();
+        try{
+            statsFactory.createStats();
+        }catch (Exception e){
+            log.error("exception: {}", e.getMessage());
+        }
+
         eventsManager.addHandler(this);
         CONTROLLER_IO = controlerIO;
         PathTraversalSpatialTemporalTableGenerator.setVehicles(services.vehicleTypes());
@@ -89,46 +92,41 @@ public class GraphsStatsAgentSimEventsListener implements BasicEventHandler, Ite
         deadHeadingStats.collectEvents(event);
     }
 
-    public void createGraphs(IterationEndsEvent event) throws IOException {
-        for (GraphAnalysis stat : statsFactory.getGraphAnalysis()) stat.createGraph(event);
-        DeadHeadingAnalysis deadHeadingStats = (DeadHeadingAnalysis) statsFactory.getAnalysis(StatsType.DeadHeading);
-        deadHeadingStats.createGraph(event, "TNC0");
-
-
-        if (CONTROLLER_IO != null) {
+    public void createGraphs(IterationEndsEvent event) {
             try {
-                // TODO: Asif - benchmarkFileLoc also part of calibraiton yml -> remove there (should be just in config file)
+                for (GraphAnalysis stat : statsFactory.getGraphAnalysis()) stat.createGraph(event);
+                DeadHeadingAnalysis deadHeadingStats = (DeadHeadingAnalysis) statsFactory.getAnalysis(StatsType.DeadHeading);
+                deadHeadingStats.createGraph(event, "TNC0");
+                if (CONTROLLER_IO != null) {
+                    // TODO: Asif - benchmarkFileLoc also part of calibraiton yml -> remove there (should be just in config file)
 
-                // TODO: Asif there should be no need to write to root and then read (just quick hack) -> update interface on methods, which need that data to pass in memory
-                ModeChosenAnalysis modeChoseStats = (ModeChosenAnalysis) statsFactory.getAnalysis(StatsType.ModeChosen);
-                modeChoseStats.writeToRootCSV(ModeChosenAnalysis.getModeChoiceFileBaseName());
-                if (beamConfig.beam().calibration().mode().benchmarkFileLoc().trim().length() > 0) {
-                    String outPath = CONTROLLER_IO.getOutputFilename(ModeChosenAnalysis.getModeChoiceFileBaseName() + ".csv");
-                    Double modesAbsoluteError = new ModeChoiceObjectiveFunction(beamConfig.beam().calibration().mode().benchmarkFileLoc())
-                            .evaluateFromRun(outPath, ErrorComparisonType.AbsoluteError());
-                    log.info("modesAbsoluteError: " + modesAbsoluteError);
+                    // TODO: Asif there should be no need to write to root and then read (just quick hack) -> update interface on methods, which need that data to pass in memory
+                    ModeChosenAnalysis modeChoseStats = (ModeChosenAnalysis) statsFactory.getAnalysis(StatsType.ModeChosen);
+                    modeChoseStats.writeToRootCSV(ModeChosenAnalysis.getModeChoiceFileBaseName());
+                    if (beamConfig.beam().calibration().mode().benchmarkFileLoc().trim().length() > 0) {
+                        String outPath = CONTROLLER_IO.getOutputFilename(ModeChosenAnalysis.getModeChoiceFileBaseName() + ".csv");
+                        Double modesAbsoluteError = new ModeChoiceObjectiveFunction(beamConfig.beam().calibration().mode().benchmarkFileLoc())
+                                .evaluateFromRun(outPath, ErrorComparisonType.AbsoluteError());
+                        log.info("modesAbsoluteError: " + modesAbsoluteError);
 
-                    Double modesRMSPError = new ModeChoiceObjectiveFunction(beamConfig.beam().calibration().mode().benchmarkFileLoc())
-                            .evaluateFromRun(outPath, ErrorComparisonType.RMSPE());
-                    log.info("modesRMSPError: " + modesRMSPError);
+                        Double modesRMSPError = new ModeChoiceObjectiveFunction(beamConfig.beam().calibration().mode().benchmarkFileLoc())
+                                .evaluateFromRun(outPath, ErrorComparisonType.RMSPE());
+                        log.info("modesRMSPError: " + modesRMSPError);
+                    }
                 }
             } catch (Exception e) {
                 log.error("exception: {}", e.getMessage());
             }
-        }
+
     }
 
-    public void notifyShutdown(ShutdownEvent event) throws Exception {
-        RealizedModeAnalysis realizedModeStats = (RealizedModeAnalysis) statsFactory.getAnalysis(StatsType.RealizedMode);
-        if (realizedModeStats != null) realizedModeStats.notifyShutdown(event);
-    }
-
+    private final static String ON_DEMAND_RIDE = "onDemandRide";
     @Override
     public Map<String, Double> getSummaryStats() {
         return statsFactory.getSummaryAnalysis().stream()
                 .map(IterationSummaryAnalysis::getSummaryStats)
                 .map(Map::entrySet)
                 .flatMap(Collection::stream)
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                .collect(Collectors.toMap(e -> e.getKey().replaceAll(RideHailWaitingAnalysis.RIDE_HAIL, ON_DEMAND_RIDE), Map.Entry::getValue));
     }
 }

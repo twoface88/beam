@@ -7,7 +7,7 @@ import java.util.concurrent.ThreadLocalRandom
 import akka.actor.Status.Success
 import akka.actor._
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
-import beam.agentsim.agents.vehicles.BeamVehicle
+import beam.agentsim.agents.vehicles.{BeamVehicle, BeamVehicleType}
 import beam.agentsim.agents.vehicles.VehicleProtocol.StreetVehicle
 import beam.agentsim.events.SpaceTime
 import beam.agentsim.infrastructure.ZonalParkingManagerSpec
@@ -16,8 +16,6 @@ import beam.router.BeamRouter._
 import beam.router.Modes.BeamMode
 import beam.router.Modes.BeamMode.{BIKE, BUS, CAR, RIDE_HAIL, TRANSIT, WALK, WALK_TRANSIT}
 import beam.router.gtfs.FareCalculator
-import beam.router.model.RoutingModel
-import beam.router.model.RoutingModel.WindowTime
 import beam.router.osm.TollCalculator
 import beam.router.r5.DefaultNetworkCoordinator
 import beam.sim.BeamServices
@@ -92,7 +90,7 @@ class RouterPerformanceSpec
   override def beforeAll(configMap: ConfigMap): Unit = {
     val confPath =
       configMap.getWithDefault("config", "test/input/sf-light/sf-light.conf")
-    config = testConfig(confPath)
+    config = testConfig(confPath).resolve()
     val beamConfig = BeamConfig(config)
 
     val services: BeamServices = mock[BeamServices](withSettings().stubOnly())
@@ -105,7 +103,6 @@ class RouterPerformanceSpec
         ZonedDateTime.parse(beamConfig.beam.routing.baseDate)
       )
     )
-    when(services.vehicles).thenReturn(new TrieMap[Id[BeamVehicle], BeamVehicle])
     val networkCoordinator: DefaultNetworkCoordinator = new DefaultNetworkCoordinator(beamConfig)
     networkCoordinator.loadNetwork()
     networkCoordinator.convertFrequenciesToTrips()
@@ -157,7 +154,7 @@ class RouterPerformanceSpec
           val origin = pair.head.getCoord
           val destination = pair(1).getCoord
 
-          val time = RoutingModel.DiscreteTime(8 * 3600)
+          val time = (8 * 3600)
           router ! RoutingRequest(
             origin,
             destination,
@@ -166,6 +163,7 @@ class RouterPerformanceSpec
             Vector(
               StreetVehicle(
                 Id.createVehicleId("116378-2"),
+                BeamVehicleType.defaultCarBeamVehicleType.id,
                 new SpaceTime(origin, 0),
                 CAR,
                 asDriver = true
@@ -205,8 +203,7 @@ class RouterPerformanceSpec
           testSet.foreach(pair => {
             val origin = pair.head.getCoord
             val destination = pair(1).getCoord
-            val time =
-              RoutingModel.DiscreteTime(8 * 3600 /*pair(0).getEndTime.toInt*/ )
+            val time = 8 * 3600 /*pair(0).getEndTime.toInt*/
 
             mode.r5Mode match {
               case Some(Left(_)) =>
@@ -214,7 +211,8 @@ class RouterPerformanceSpec
                 streetVehicles = Vector(
                   StreetVehicle(
                     Id.createVehicleId("116378-2"),
-                    new SpaceTime(origin, time.atTime),
+                    BeamVehicleType.defaultCarBeamVehicleType.id,
+                    new SpaceTime(origin, time),
                     mode,
                     asDriver = true
                   )
@@ -224,7 +222,8 @@ class RouterPerformanceSpec
                 streetVehicles = Vector(
                   StreetVehicle(
                     Id.createVehicleId("body-116378-2"),
-                    new SpaceTime(new Coord(origin.getX, origin.getY), time.atTime),
+                    BeamVehicleType.defaultCarBeamVehicleType.id,
+                    new SpaceTime(new Coord(origin.getX, origin.getY), time),
                     WALK,
                     asDriver = true
                   )
@@ -475,9 +474,9 @@ class RouterPerformanceSpec
     profileRequest.toLat = destination.getX
     profileRequest.toLon = destination.getY
 
-    val time = WindowTime(fromFacility.getEndTime.toInt)
-    profileRequest.fromTime = time.fromTime
-    profileRequest.toTime = time.toTime
+    val time = fromFacility.getEndTime.toInt
+    profileRequest.fromTime = time
+    profileRequest.toTime = time
 
     profileRequest.directModes = util.EnumSet.copyOf(List(LegMode.CAR).asJavaCollection)
 

@@ -4,6 +4,7 @@ import java.io.{BufferedWriter, File, FileWriter}
 
 import akka.actor._
 import akka.testkit.TestProbe
+import beam.agentsim.agents.vehicles.BeamVehicleType
 import beam.agentsim.agents.vehicles.VehicleProtocol.StreetVehicle
 import beam.agentsim.events.SpaceTime
 import beam.agentsim.infrastructure.ZonalParkingManagerSpec
@@ -39,7 +40,7 @@ class SfLightRouterTransitSpec extends AbstractSfLightSpec with Inside with Lazy
     "respond with a route to a first reasonable RoutingRequest" in {
       val origin = geo.wgs2Utm(new Coord(-122.396944, 37.79288)) // Embarcadero
       val destination = geo.wgs2Utm(new Coord(-122.460555, 37.764294)) // Near UCSF medical center
-      val time = RoutingModel.DiscreteTime(25740)
+      val time = 25740
       router ! RoutingRequest(
         origin,
         destination,
@@ -48,7 +49,8 @@ class SfLightRouterTransitSpec extends AbstractSfLightSpec with Inside with Lazy
         Vector(
           StreetVehicle(
             Id.createVehicleId("body-667520-0"),
-            new SpaceTime(origin, time.atTime),
+            BeamVehicleType.defaultCarBeamVehicleType.id,
+            new SpaceTime(origin, time),
             WALK,
             asDriver = true
           )
@@ -74,7 +76,7 @@ class SfLightRouterTransitSpec extends AbstractSfLightSpec with Inside with Lazy
             .foreach(pair => {
               val origin = pair(0).getCoord
               val destination = pair(1).getCoord
-              val time = RoutingModel.DiscreteTime(pair(0).getEndTime.toInt)
+              val time = pair(0).getEndTime.toInt
               router ! RoutingRequest(
                 origin,
                 destination,
@@ -83,13 +85,15 @@ class SfLightRouterTransitSpec extends AbstractSfLightSpec with Inside with Lazy
                 Vector(
                   StreetVehicle(
                     Id.createVehicleId("116378-2"),
+                    BeamVehicleType.defaultCarBeamVehicleType.id,
                     new SpaceTime(origin, 0),
                     CAR,
                     asDriver = true
                   ),
                   StreetVehicle(
                     Id.createVehicleId("body-116378-2"),
-                    new SpaceTime(new Coord(origin.getX, origin.getY), time.atTime),
+                    BeamVehicleType.defaultCarBeamVehicleType.id,
+                    new SpaceTime(new Coord(origin.getX, origin.getY), time),
                     WALK,
                     asDriver = true
                   )
@@ -113,7 +117,7 @@ class SfLightRouterTransitSpec extends AbstractSfLightSpec with Inside with Lazy
     "respond with a unlimited transfer route having cost 2.75 USD." in {
       val origin = new Coord(549598.9574660371, 4176177.2431860007)
       val destination = new Coord(544417.3891361314, 4177016.733758491)
-      val time = RoutingModel.DiscreteTime(64080)
+      val time = 64080
       router ! RoutingRequest(
         origin,
         destination,
@@ -122,7 +126,8 @@ class SfLightRouterTransitSpec extends AbstractSfLightSpec with Inside with Lazy
         Vector(
           StreetVehicle(
             Id.createVehicleId("body-667520-0"),
-            new SpaceTime(origin, time.atTime),
+            BeamVehicleType.defaultCarBeamVehicleType.id,
+            new SpaceTime(origin, time),
             WALK,
             asDriver = true
           )
@@ -138,7 +143,7 @@ class SfLightRouterTransitSpec extends AbstractSfLightSpec with Inside with Lazy
     "respond with a BART route without transfer having cost 1.95 USD." in {
       val origin = geo.wgs2Utm(new Coord(-122.41969, 37.76506)) // 16th St. Mission
       val destination = geo.wgs2Utm(new Coord(-122.40686, 37.784992)) // Powell St.
-      val time = RoutingModel.DiscreteTime(51840)
+      val time = 51840
       router ! RoutingRequest(
         origin,
         destination,
@@ -147,7 +152,8 @@ class SfLightRouterTransitSpec extends AbstractSfLightSpec with Inside with Lazy
         Vector(
           StreetVehicle(
             Id.createVehicleId("body-667520-0"),
-            new SpaceTime(origin, time.atTime),
+            BeamVehicleType.defaultCarBeamVehicleType.id,
+            new SpaceTime(origin, time),
             WALK,
             asDriver = true
           )
@@ -167,7 +173,7 @@ class SfLightRouterTransitSpec extends AbstractSfLightSpec with Inside with Lazy
   private def printResponse(
     origin: Location,
     destination: Location,
-    time: RoutingModel.DiscreteTime,
+    time: Int,
     response: RoutingResponse
   ): Unit = {
     response.itineraries.foreach(
@@ -196,7 +202,7 @@ class SfLightRouterTransitSpec extends AbstractSfLightSpec with Inside with Lazy
     personId: Id[Person],
     origin: Location,
     destination: Location,
-    time: RoutingModel.DiscreteTime,
+    time: Int,
     response: RoutingResponse
   ): Unit = {
     val writer = new BufferedWriter(new FileWriter(new File("d:/test-out.txt"), true))
