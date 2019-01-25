@@ -303,8 +303,9 @@ class RideHailManager(
 
   private val rand = new Random(beamServices.beamConfig.matsim.modules.global.randomSeed)
   private val rideHailinitialLocationSpatialPlot = new SpatialPlot(1100, 1100, 50)
-  val quadTreeBounds: QuadTreeBounds = ProfilingUtils.timed("getQuadTreeBound",
-    getQuadTreeBound(scenario.getPopulation), log.info)
+
+  val quadTreeBounds: QuadTreeBounds =
+    ProfilingUtils.timed("getQuadTreeBound", getQuadTreeBound(scenario.getPopulation), log.info)
   val resources: mutable.Map[Id[BeamVehicle], BeamVehicle] = mutable.Map[Id[BeamVehicle], BeamVehicle]()
 
   beamServices.beamConfig.beam.agentsim.agents.rideHail.initialization.initType match {

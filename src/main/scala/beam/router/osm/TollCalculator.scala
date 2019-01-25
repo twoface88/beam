@@ -30,9 +30,11 @@ class TollCalculator @Inject()(val config: BeamConfig) extends LazyLogging {
   def calcTollByOsmIds(osmIds: IndexedSeq[Long]): Double = {
     if (osmIds.isEmpty || tollsByWayId.isEmpty) 0
     else {
-      osmIds.map(tollsByWayId.get)
+      osmIds
+        .map(tollsByWayId.get)
         .filter(toll => toll != null)
-        .map(toll => applyTimeDependentTollAtTime(toll, 0)).sum
+        .map(toll => applyTimeDependentTollAtTime(toll, 0))
+        .sum
 
 //      var i = 0
 //      var sum: Double = 0

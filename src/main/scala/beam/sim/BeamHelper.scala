@@ -134,6 +134,7 @@ trait BeamHelper extends LazyLogging {
     parsedArgs: Arguments,
     config: TypesafeConfig
   ): TypesafeConfig = {
+
     config.withFallback(
       ConfigFactory.parseMap(
         (
@@ -358,26 +359,25 @@ trait BeamHelper extends LazyLogging {
   }
 
   def runBeamWithConfig(config: TypesafeConfig): (Config, String) = {
+
     val (scenario, outputDir, networkCoordinator) = setupBeamWithConfig(config)
 
     val networkHelper: NetworkHelper = new NetworkHelperImpl(networkCoordinator.network)
-
     val injector = org.matsim.core.controler.Injector.createInjector(
       scenario.getConfig,
       module(config, scenario, networkCoordinator, networkHelper)
     )
+    val beamServices = injector.getInstance(classOf[BeamServices])
+    val beamConfig = beamServices.beamConfig
+    var useCSVFiles
+      : Boolean = beamConfig.beam.agentsim.agents.population.beamPopulationDirectory != null && !beamConfig.beam.agentsim.agents.population.beamPopulationDirectory
+      .isEmpty()
 
     networkCoordinator.convertFrequenciesToTrips()
 
     scenario.setNetwork(networkCoordinator.network)
 
-    val beamServices = injector.getInstance(classOf[BeamServices])
-
     //
-    val beamConfig = beamServices.beamConfig
-    var useCSVFiles
-      : Boolean = beamConfig.beam.agentsim.agents.population.beamPopulationDirectory != null && !beamConfig.beam.agentsim.agents.population.beamPopulationDirectory
-      .isEmpty()
 
     if (useCSVFiles) {
       val csvScenarioLoader = new ScenarioReaderCsv(scenario, beamServices)

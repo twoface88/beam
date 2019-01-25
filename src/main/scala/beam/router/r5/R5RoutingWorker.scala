@@ -221,12 +221,14 @@ class R5RoutingWorker(workerParams: WorkerParameters) extends Actor with ActorLo
 
   private val linkArr: Array[Link] = {
     val start = System.currentTimeMillis()
-    val sortedPairs = links.asScala.map { case (k, v) => k.toString.toInt -> v }.toSeq.sortBy { case (linkId, link) => linkId }
+    val sortedPairs =
+      links.asScala.map { case (k, v) => k.toString.toInt -> v }.toSeq.sortBy { case (linkId, link) => linkId }
     val maxLinkId = sortedPairs.maxBy(x => x._1)
     log.info(s"MaxLinkId: $maxLinkId")
     val arr = new Array[Link](maxLinkId._1 + 1)
-    sortedPairs.foreach { case (linkId, link) =>
-      arr(linkId) = link
+    sortedPairs.foreach {
+      case (linkId, link) =>
+        arr(linkId) = link
     }
     val end = System.currentTimeMillis()
     log.info(s"linkArr with size ${arr.length} is built in {} ms", end - start)
