@@ -162,11 +162,14 @@ object ParkingStall {
 
   case object Block extends PricingModel
 
+  case object Free extends PricingModel
+
   object PricingModel {
 
     def fromString(s: String): PricingModel = s match {
       case "FlatFee" => FlatFee
       case "Block"   => Block
+      case "Free"    => Free
     }
   }
 

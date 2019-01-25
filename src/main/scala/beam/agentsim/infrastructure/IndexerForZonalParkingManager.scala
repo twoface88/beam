@@ -79,7 +79,7 @@ class IndexerForZonalParkingManager(resources: Map[StallAttributes, StallValues]
 
 object IndexerForZonalParkingManager {
   // TODO How to make sure that this will be in sync? One of the solution is to make runtime check using reflection
-  val allPricingModels: Array[PricingModel] = Array(FlatFee, Block)
+  val allPricingModels: Array[PricingModel] = Array(FlatFee, Block, Free)
 
   def idxForFind(resources: Map[StallAttributes, StallValues]): Map[IndexForFind, Array[StallValues]] = {
     resources
