@@ -59,7 +59,7 @@ class DelayMetricAnalysis @Inject()(
   override def handleEvent(event: Event): Unit = {
     event match {
       case pathTraversalEvent: PathTraversalEvent =>
-        val mode = pathTraversalEvent.getAttributes.get(PathTraversalEvent.ATTRIBUTE_MODE)
+        val mode = pathTraversalEvent.mode
         if (mode.equals(CAR.value)) {
           val linkIds = pathTraversalEvent.linkIds
           val linkTravelTimes = pathTraversalEvent.linkTravelTimes
