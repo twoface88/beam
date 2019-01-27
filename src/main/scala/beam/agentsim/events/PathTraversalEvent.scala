@@ -17,42 +17,30 @@ class PathTraversalEvent(
   val time: Double,
   val vehicleId: Id[Vehicle],
   val driverId: String,
-  val vehicleType: BeamVehicleType,
+  val vehicleType: String,
+  val seatingCapacity: Int,
+  val standingRoomCapacity: Int,
+  val fuelType: String,
   val numPass: Int,
-  val beamLeg: BeamLeg,
+  val departureTime: Int,
+  val arrivalTime: Int,
+  val mode: BeamMode,
+  val legLength: Double,
+  val linkIds: IndexedSeq[Int],
+  val linkTravelTimes: IndexedSeq[Int],
+  val startX: Double,
+  val startY: Double,
+  val endX: Double,
+  val endY: Double,
   val fuelConsumed: Double,
   val endLegFuelLevel: Double,
   val amountPaid: Double
 ) extends Event(time) {
   import PathTraversalEvent._
 
-  def departureTime: Int = beamLeg.startTime
+  def capacity: Int = seatingCapacity + standingRoomCapacity
 
-  def arrivalTime: Int = beamLeg.endTime
-
-  def mode: BeamMode = beamLeg.mode
-
-  def capacity: Int = vehicleType.seatingCapacity + vehicleType.standingRoomCapacity
-
-  def fuelType: String = Option(vehicleType.primaryFuelType).map(_.toString).getOrElse("")
-
-  def legLength: Double = beamLeg.travelPath.distanceInM
-
-  def linkIds: IndexedSeq[Int] = beamLeg.travelPath.linkIds
-
-  def linkIdsJava: util.List[Int] = beamLeg.travelPath.linkIds.asJava
-
-  def linkTravelTimes: IndexedSeq[Int] = beamLeg.travelPath.linkTravelTime
-
-  def startX: Double = beamLeg.travelPath.startPoint.loc.getX
-
-  def startY: Double = beamLeg.travelPath.startPoint.loc.getY
-
-  def endX: Double = beamLeg.travelPath.endPoint.loc.getX
-
-  def endY: Double = beamLeg.travelPath.endPoint.loc.getY
-
-  def seatingCapacity: Int = vehicleType.seatingCapacity
+  def linkIdsJava: util.List[Int] = linkIds.asJava
 
   override def getEventType: String = "PathTraversal"
 
@@ -60,12 +48,12 @@ class PathTraversalEvent(
     new AtomicReference[util.Map[String, String]](Collections.emptyMap())
 
   override def getAttributes: util.Map[String, String] = {
-    var attr = attributes.get();
+    var attr = attributes.get()
     if (attr == Collections.EMPTY_MAP) {
       attr = super.getAttributes()
       attr.put(ATTRIBUTE_VEHICLE_ID, vehicleId.toString)
       attr.put(ATTRIBUTE_DRIVER_ID, driverId)
-      attr.put(ATTRIBUTE_VEHICLE_TYPE, vehicleType.toString)
+      attr.put(ATTRIBUTE_VEHICLE_TYPE, vehicleType)
       attr.put(ATTRIBUTE_LENGTH, legLength.toString)
       attr.put(ATTRIBUTE_NUM_PASS, numPass.toString)
 
@@ -114,4 +102,40 @@ object PathTraversalEvent {
   val ATTRIBUTE_END_LEG_FUEL_LEVEL: String = "endLegFuelLevel"
   val ATTRIBUTE_TOLL_PAID: String = "tollPaid"
   val ATTRIBUTE_SEATING_CAPACITY: String = "seatingCapacity"
+
+  def apply(
+    time: Double,
+    vehicleId: Id[Vehicle],
+    driverId: String,
+    vehicleType: BeamVehicleType,
+    numPass: Int,
+    beamLeg: BeamLeg,
+    fuelConsumed: Double,
+    endLegFuelLevel: Double,
+    amountPaid: Double
+  ): PathTraversalEvent = {
+    new PathTraversalEvent(
+      time = time,
+      vehicleId = vehicleId,
+      driverId = driverId,
+      vehicleType = vehicleType.id.toString,
+      seatingCapacity = vehicleType.seatingCapacity,
+      standingRoomCapacity = vehicleType.standingRoomCapacity,
+      fuelType = vehicleType.primaryFuelType.toString,
+      numPass = numPass,
+      departureTime = beamLeg.startTime,
+      arrivalTime = beamLeg.endTime,
+      mode = beamLeg.mode,
+      legLength = beamLeg.travelPath.distanceInM,
+      linkIds = beamLeg.travelPath.linkIds,
+      linkTravelTimes = beamLeg.travelPath.linkTravelTime,
+      startX = beamLeg.travelPath.startPoint.loc.getX,
+      startY = beamLeg.travelPath.startPoint.loc.getY,
+      endX = beamLeg.travelPath.endPoint.loc.getX,
+      endY = beamLeg.travelPath.endPoint.loc.getY,
+      fuelConsumed = fuelConsumed,
+      endLegFuelLevel = endLegFuelLevel,
+      amountPaid = amountPaid
+    )
+  }
 }
