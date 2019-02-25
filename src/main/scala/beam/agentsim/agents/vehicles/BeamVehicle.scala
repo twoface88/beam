@@ -4,14 +4,14 @@ import akka.actor.ActorRef
 import beam.agentsim.agents.PersonAgent
 import beam.agentsim.agents.vehicles.BeamVehicle.BeamVehicleState
 import beam.agentsim.agents.vehicles.EnergyEconomyAttributes.Powertrain
-import beam.agentsim.agents.vehicles.VehicleCategory.Bike
+import beam.agentsim.agents.vehicles.VehicleCategory.{Bike, Body}
 import beam.agentsim.agents.vehicles.VehicleProtocol.StreetVehicle
 import beam.agentsim.events.SpaceTime
 import beam.agentsim.infrastructure.ParkingStall
 import beam.agentsim.infrastructure.ParkingStall.ChargingType
 import beam.router.Modes
 import beam.router.Modes.BeamMode
-import beam.router.Modes.BeamMode.{BIKE, CAR}
+import beam.router.Modes.BeamMode.{BIKE, CAR, WALK}
 import beam.router.model.BeamLeg
 import beam.sim.BeamServices
 import beam.sim.common.GeoUtils
@@ -155,6 +155,8 @@ class BeamVehicle(
     val mode = beamVehicleType.vehicleCategory match {
       case Bike =>
         BIKE
+      case Body =>
+        WALK
       case _ =>
         CAR
     }

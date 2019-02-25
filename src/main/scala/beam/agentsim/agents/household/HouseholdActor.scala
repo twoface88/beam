@@ -27,12 +27,6 @@ import scala.concurrent.ExecutionContext
 
 object HouseholdActor {
 
-  def buildActorName(id: Id[households.Household], iterationName: Option[String] = None): String = {
-    s"household-${id.toString}" + iterationName
-      .map(i => s"_iter-$i")
-      .getOrElse("")
-  }
-
   def props(
     beamServices: BeamServices,
     modeChoiceCalculator: AttributesOfIndividual => ModeChoiceCalculator,
@@ -82,7 +76,6 @@ object HouseholdActor {
     * joint travel decision-making.
     *
     * The [[HouseholdActor]] is the central arbiter for vehicle allocation during individual and joint mode choice events.
-    * Any agent in a mode choice situation must send a [[MobilityStatusInquiry]] to the [[HouseholdActor]]. The
     *
     * @author dserdiuk/sfeygin
     * @param vehicles the [[BeamVehicle]]s managed by this [[Household]].

@@ -550,21 +550,22 @@ class PersonWithPersonalVehiclePlanSpec
 
       for (i <- 0 to 1) {
         expectMsgPF() {
-          case EmbodyWithCurrentTravelTime(leg, vehicleId, _, _) =>
+          case EmbodyWithCurrentTravelTime(leg, vehicleId, vehicleTypeId, requestId) =>
+            println(vehicleId)
             val embodiedLeg = EmbodiedBeamLeg(
               beamLeg = leg.copy(
                 duration = 500,
                 travelPath = leg.travelPath.copy(linkTravelTime = Array(0, 100, 100, 100, 100, 100, 0))
               ),
               beamVehicleId = vehicleId,
-              BeamVehicleType.defaultTransitBeamVehicleType.id,
+              vehicleTypeId,
               asDriver = true,
               cost = 0.0,
               unbecomeDriverOnCompletion = true
             )
             lastSender ! RoutingResponse(
               Vector(EmbodiedBeamTrip(Vector(embodiedLeg))),
-              requestId = 1
+              requestId = requestId
             )
         }
       }

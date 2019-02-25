@@ -290,6 +290,7 @@ class PersonAgent(
         case Some(nextAct) =>
           logDebug(s"wants to go to ${nextAct.getType} @ $tick")
           holdTickAndTriggerId(tick, triggerId)
+          body.spaceTime = SpaceTime(currentActivity(data).getCoord, _currentTick.get)
           goto(ChoosingMode) using ChoosesModeData(
             personData = data.copy(
               // If we don't have a current tour mode (i.e. are not on a tour aka at home),
@@ -303,8 +304,7 @@ class PersonAgent(
                 }
               ),
               numberOfReplanningAttempts = 0
-            ),
-            SpaceTime(currentActivity(data).getCoord, _currentTick.get)
+            )
           )
       }
   }
@@ -363,12 +363,12 @@ class PersonAgent(
   ): State = {
     logDebug(s"replanning because ${error.errorCode}")
     eventsManager.processEvent(new ReplanningEvent(_currentTick.get, Id.createPersonId(id)))
+    body.spaceTime = SpaceTime(
+      beamServices.geo.wgs2Utm(data.restOfCurrentTrip.head.beamLeg.travelPath.startPoint).loc,
+      _currentTick.get
+    )
     goto(ChoosingMode) using ChoosesModeData(
       data.copy(currentTourMode = None, numberOfReplanningAttempts = data.numberOfReplanningAttempts + 1),
-      currentLocation = SpaceTime(
-        beamServices.geo.wgs2Utm(data.restOfCurrentTrip.head.beamLeg.travelPath.startPoint).loc,
-        _currentTick.get
-      ),
       isWithinTripReplanning = true
     )
   }
@@ -384,10 +384,9 @@ class PersonAgent(
         ) =>
       logDebug(s"replanning because ${firstErrorResponse.errorCode}")
       eventsManager.processEvent(new ReplanningEvent(_currentTick.get, Id.createPersonId(id)))
+      body.spaceTime = SpaceTime(beamServices.geo.wgs2Utm(nextLeg.beamLeg.travelPath.startPoint).loc, _currentTick.get)
       goto(ChoosingMode) using ChoosesModeData(
         data.copy(numberOfReplanningAttempts = data.numberOfReplanningAttempts + 1),
-        currentLocation =
-          SpaceTime(beamServices.geo.wgs2Utm(nextLeg.beamLeg.travelPath.startPoint).loc, _currentTick.get),
         isWithinTripReplanning = true
       )
     // RIDE HAIL DELAY
@@ -533,15 +532,15 @@ class PersonAgent(
       beamVehicles.put(vehicle.id, ActualVehicle(vehicle))
       goto(ProcessingNextLegOrStartActivity)
     case Event(NotAvailable, basePersonData: BasePersonData) =>
+      body.spaceTime = SpaceTime(
+        beamServices.geo.wgs2Utm(basePersonData.restOfCurrentTrip.head.beamLeg.travelPath.startPoint).loc,
+        _currentTick.get
+      )
       goto(ChoosingMode) using ChoosesModeData(
         basePersonData.copy(
           currentTourMode = None, // Have to give up my mode as well, perhaps there's no option left for driving.
           currentTourPersonalVehicle = None,
           numberOfReplanningAttempts = basePersonData.numberOfReplanningAttempts + 1
-        ),
-        SpaceTime(
-          beamServices.geo.wgs2Utm(basePersonData.restOfCurrentTrip.head.beamLeg.travelPath.startPoint).loc,
-          _currentTick.get
         )
       )
   }
@@ -636,12 +635,10 @@ class PersonAgent(
       // initial inquiry). So we replan but change tour mode to WALK_TRANSIT since we've already done our non-transit
       // portion.
       log.debug("Missed transit pickup, late by {} sec", _currentTick.get - nextLeg.beamLeg.startTime)
-
+      body.spaceTime = SpaceTime(beamServices.geo.wgs2Utm(nextLeg.beamLeg.travelPath.startPoint).loc, _currentTick.get)
       goto(ChoosingMode) using ChoosesModeData(
         personData = data
           .copy(currentTourMode = Some(WALK_TRANSIT), numberOfReplanningAttempts = data.numberOfReplanningAttempts + 1),
-        currentLocation =
-          SpaceTime(beamServices.geo.wgs2Utm(nextLeg.beamLeg.travelPath.startPoint).loc, _currentTick.get),
         isWithinTripReplanning = true
       )
     // TRANSIT

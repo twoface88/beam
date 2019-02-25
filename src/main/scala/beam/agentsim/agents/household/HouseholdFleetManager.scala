@@ -2,16 +2,13 @@ package beam.agentsim.agents.household
 import java.util.concurrent.TimeUnit
 
 import akka.actor.Status.{Failure, Success}
-import akka.actor.{Actor, ActorLogging, ActorRef, PoisonPill}
+import akka.actor.{Actor, ActorLogging, ActorRef}
+import akka.pattern.{ask, pipe}
 import akka.util.Timeout
 import beam.agentsim.Resource.NotifyVehicleIdle
+import beam.agentsim.agents.BeamAgent.Finish
 import beam.agentsim.agents.InitializeTrigger
-import beam.agentsim.agents.household.HouseholdActor.{
-  MobilityStatusInquiry,
-  MobilityStatusResponse,
-  ReleaseVehicle,
-  ReleaseVehicleAndReply
-}
+import beam.agentsim.agents.household.HouseholdActor.{MobilityStatusInquiry, MobilityStatusResponse, ReleaseVehicle, ReleaseVehicleAndReply}
 import beam.agentsim.agents.modalbehaviors.DrivesVehicle.ActualVehicle
 import beam.agentsim.agents.vehicles.BeamVehicle
 import beam.agentsim.events.SpaceTime
@@ -23,8 +20,6 @@ import beam.sim.population.AttributesOfIndividual
 import org.matsim.api.core.v01.{Coord, Id}
 
 import scala.concurrent.{ExecutionContext, Future}
-import akka.pattern.{ask, pipe}
-import beam.agentsim.agents.BeamAgent.Finish
 
 class HouseholdFleetManager(parkingManager: ActorRef, vehicles: Map[Id[BeamVehicle], BeamVehicle], homeCoord: Coord)
     extends Actor
