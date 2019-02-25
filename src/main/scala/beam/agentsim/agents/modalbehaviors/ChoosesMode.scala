@@ -207,7 +207,8 @@ trait ChoosesMode {
             responsePlaceholders = makeResponsePlaceholders(withRouting = true, withParking = true)
             requestId = None
           }
-          parkingRequestId = makeRequestWith(Vector(TRANSIT), beamVehicles.values.map(_.streetVehicle).toVector, withParking = true)
+          parkingRequestId =
+            makeRequestWith(Vector(TRANSIT), beamVehicles.values.map(_.streetVehicle).toVector, withParking = true)
         case Some(WALK) =>
           responsePlaceholders = makeResponsePlaceholders(withRouting = true)
           makeRequestWith(Vector(), Vector(body.toStreetVehicle), withParking = false)
@@ -291,7 +292,8 @@ trait ChoosesMode {
                 Vector(TRANSIT),
                 beamVehicles.values
                   .map(_.streetVehicle)
-                  .filter(_.id == currentTourPersonalVehicle).toVector :+ body.toStreetVehicle,
+                  .filter(_.id == currentTourPersonalVehicle)
+                  .toVector :+ body.toStreetVehicle,
                 streetVehiclesIntermodalUse = Egress,
                 withParking = true
               )
@@ -892,7 +894,8 @@ trait ChoosesMode {
       // except my body (which I manage myself), and possibly my designated tour vehicle,
       // which I release separately when I get home, even when I abandon it away from home.
       val vehiclesIWantToKeepIds = chosenTrip.vehiclesInTrip :+ body.id :+ data.personData.currentTourPersonalVehicle
-      val (vehiclesIWantToKeep, vehiclesIWantToReturn) = beamVehicles.values.partition(vehicle => vehiclesIWantToKeepIds.contains(vehicle.id))
+      val (vehiclesIWantToKeep, vehiclesIWantToReturn) =
+        beamVehicles.values.partition(vehicle => vehiclesIWantToKeepIds.contains(vehicle.id))
       vehiclesIWantToReturn.collect {
         case ActualVehicle(vehicle) =>
           vehicle.manager.get ! ReleaseVehicle(vehicle)
