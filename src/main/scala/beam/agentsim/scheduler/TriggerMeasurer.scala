@@ -56,7 +56,7 @@ class TriggerMeasurer(val cfg: BeamConfig.Beam.Debug.TriggerMeasurer) extends La
     }
   }
 
-  def resolved(t: TriggerWithId): Unit = {
+  def resolved(t: TriggerWithId): Long = {
     triggerWithIdToStartTime.get(t) match {
       case Some(startTime) =>
         val stopTime = System.nanoTime()
@@ -69,8 +69,10 @@ class TriggerMeasurer(val cfg: BeamConfig.Beam.Debug.TriggerMeasurer) extends La
             val buffer = ArrayBuffer[Long](diff)
             triggerTypeToOccurrence.put(triggerClass, buffer)
         }
+        diff
       case None =>
         logger.error(s"Can't find $t in triggerWithIdToStartTime")
+        -1L
     }
   }
 

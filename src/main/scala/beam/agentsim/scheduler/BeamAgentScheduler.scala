@@ -3,15 +3,12 @@ package beam.agentsim.scheduler
 import java.util.Comparator
 import java.util.concurrent.TimeUnit
 
+import akka.Done
 import akka.actor.{Actor, ActorLogging, ActorRef, Cancellable, Props, Terminated}
 import akka.event.LoggingReceive
 import akka.util.Timeout
 import beam.agentsim.agents.BeamAgent.Finish
-import beam.agentsim.agents.ridehail.RideHailManager.{
-  ContinueBufferedRideHailRequests,
-  RecoverFromStuckness,
-  RideHailRepositioningTrigger
-}
+import beam.agentsim.agents.ridehail.RideHailManager.{RecoverFromStuckness, RideHailRepositioningTrigger}
 import beam.agentsim.scheduler.BeamAgentScheduler._
 import beam.agentsim.scheduler.Trigger.TriggerWithId
 import beam.sim.config.BeamConfig
@@ -123,7 +120,9 @@ class BeamAgentScheduler(
   val beamConfig: BeamConfig,
   stopTick: Int,
   val maxWindow: Int,
-  val stuckFinder: StuckFinder
+  val stuckFinder: StuckFinder,
+  val iterNumber: Int,
+  val outputFolder: String
 ) extends Actor
     with ActorLogging {
   // Used to set a limit on the total time to process messages (we want this to be quite large).
@@ -167,6 +166,13 @@ class BeamAgentScheduler(
   private val initialDelay = beamConfig.beam.agentsim.scheduleMonitorTask.initialDelay
   private val interval = beamConfig.beam.agentsim.scheduleMonitorTask.interval
 
+  // Important! should be created under system, not current actor! (due to lifetime)
+  val triggerStatWriterOptRef: Option[ActorRef] = Some(
+    context.system.actorOf(Props[TriggerStatWriter](new TriggerStatWriter(iterNumber, outputFolder)))
+  )
+  var completionNoticeId: Int = 0
+  var prevCompletionNoticeTs: Long = 0
+
   def scheduleTrigger(triggerToSchedule: ScheduleTrigger): Unit = {
     this.idCount += 1
 
@@ -188,6 +194,7 @@ class BeamAgentScheduler(
     log.info("aroundPostStop. Stopping all scheduled tasks...")
     stuckAgentChecker.foreach(_.cancel())
     monitorTask.foreach(_.cancel())
+
     super.aroundPostStop()
   }
 
@@ -224,8 +231,28 @@ class BeamAgentScheduler(
         val st = triggerIdToScheduledTrigger(triggerId)
         awaitingResponse.remove(completionTickOpt.get, st)
         stuckFinder.removeByKey(st)
+
+        val duration = maybeTriggerMeasurer.map(_.resolved(trigger.triggerWithId))
+        val currentCompletionNoticeTs = System.currentTimeMillis()
+        triggerStatWriterOptRef.foreach { actorRef =>
+          val diffCompletionNoticeTs = currentCompletionNoticeTs - prevCompletionNoticeTs
+
+          val info = TriggerStatWriter.Info(
+            completionNoticeId = completionNoticeId,
+            trigger = trigger,
+            duration = duration.getOrElse(-1),
+            awaitingResponseSize = awaitingResponse.size(),
+            triggerQueueSize = triggerQueue.size(),
+            prevCompletionNoticeTs = prevCompletionNoticeTs,
+            currentCompletionNoticeTs = currentCompletionNoticeTs,
+            diffCompletionNoticeTs = diffCompletionNoticeTs
+          )
+          actorRef ! info
+        }
+        prevCompletionNoticeTs = currentCompletionNoticeTs
+        completionNoticeId += 1
+
         triggerIdToScheduledTrigger -= triggerId
-        maybeTriggerMeasurer.foreach(_.resolved(trigger.triggerWithId))
       }
       triggerIdToTick -= triggerId
       if (started) doSimStep(nowInSeconds)
@@ -433,6 +460,7 @@ class BeamAgentScheduler(
   override def postStop(): Unit = {
     monitorTask.foreach(_.cancel())
     stuckAgentChecker.foreach(_.cancel())
+    triggerStatWriterOptRef.foreach(ref => ref ! Done)
   }
 
   def awaitingToString: String = {

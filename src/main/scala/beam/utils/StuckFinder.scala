@@ -5,7 +5,6 @@ import beam.agentsim.scheduler.BeamAgentScheduler.ScheduledTrigger
 import beam.agentsim.scheduler.Trigger
 import beam.sim.config.BeamConfig.Beam.Debug.StuckAgentDetection
 import beam.sim.config.BeamConfig.Beam.Debug.StuckAgentDetection.Thresholds$Elm
-import beam.utils.logging.ExponentialLazyLogging
 import beam.utils.reflection.ReflectionUtils
 import com.typesafe.scalalogging.LazyLogging
 
@@ -223,6 +222,11 @@ class StuckFinder(val cfg: StuckAgentDetection) extends LazyLogging {
       (clazz, actorTypeToMaxNumOfMessages)
     }.toMap
   }
+
+  def getActorType(actorRef: ActorRef): String = StuckFinder.getActorType(actorRef)
+}
+
+object StuckFinder {
 
   def getActorType(actorRef: ActorRef): String = {
     if (actorRef.path.parent.name == "router" && actorRef.path.name.indexOf("TransitDriverAgent-") != -1) {
