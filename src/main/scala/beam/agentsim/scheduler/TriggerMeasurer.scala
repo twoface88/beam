@@ -28,8 +28,8 @@ class TriggerMeasurer(val cfg: BeamConfig.Beam.Debug.TriggerMeasurer) extends La
   implicit val thresholds$ElmDecoder: Encoder[Thresholds$Elm] = deriveEncoder[Thresholds$Elm]
   implicit val stuckAgentDetectionDecoder: Encoder[StuckAgentDetection] = deriveEncoder[StuckAgentDetection]
 
-  private val triggerWithIdToStartTime: mutable.Map[TriggerWithId, Long] =
-    mutable.Map[TriggerWithId, Long]()
+  private val triggerIdToStartTime: mutable.Map[Long, Long] =
+    mutable.Map[Long, Long]()
   private val triggerTypeToOccurrence: mutable.Map[Class[_], ArrayBuffer[Long]] =
     mutable.Map[Class[_], ArrayBuffer[Long]]()
   private val actorToTriggerMessages: mutable.Map[ActorRef, mutable.Map[Class[_], Int]] =
@@ -41,7 +41,7 @@ class TriggerMeasurer(val cfg: BeamConfig.Beam.Debug.TriggerMeasurer) extends La
   val rideHailManagerName: String = "RideHailManager"
 
   def sent(t: TriggerWithId, actor: ActorRef): Unit = {
-    triggerWithIdToStartTime.put(t, System.nanoTime())
+    triggerIdToStartTime.put(t.triggerId, System.nanoTime())
     val triggerClazz = t.trigger.getClass
     actorToTriggerMessages.get(actor) match {
       case Some(triggerTypeToOccur) =>
@@ -57,7 +57,7 @@ class TriggerMeasurer(val cfg: BeamConfig.Beam.Debug.TriggerMeasurer) extends La
   }
 
   def resolved(t: TriggerWithId): Long = {
-    triggerWithIdToStartTime.get(t) match {
+    triggerIdToStartTime.get(t.triggerId) match {
       case Some(startTime) =>
         val stopTime = System.nanoTime()
         val diff = TimeUnit.NANOSECONDS.toMillis(stopTime - startTime)
@@ -71,7 +71,7 @@ class TriggerMeasurer(val cfg: BeamConfig.Beam.Debug.TriggerMeasurer) extends La
         }
         diff
       case None =>
-        logger.error(s"Can't find $t in triggerWithIdToStartTime")
+        logger.error(s"Can't find $t in triggerIdToStartTime")
         -1L
     }
   }
