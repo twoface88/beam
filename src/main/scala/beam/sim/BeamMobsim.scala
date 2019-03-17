@@ -86,7 +86,7 @@ class BeamMobsim @Inject()(
             new StuckFinder(beamServices.beamConfig.beam.debug.stuckAgentDetection),
             beamServices.iterationNumber,
             beamServices.matsimServices.getConfig.controler().getOutputDirectory,
-          ),
+          ).withDispatcher("pinned-dispatcher-for-beam-agent-scheduler"),
           "scheduler"
         )
         context.system.eventStream.subscribe(errorListener, classOf[DeadLetter])
